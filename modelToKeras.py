@@ -46,12 +46,14 @@ if __name__ == "__main__":
             bias_fl = bool(model_data['model_data']['bias_fl'])
             WVals = np.array(model_data['state_dict']['rec.weight_ih_l0'])
             UVals = np.array(model_data['state_dict']['rec.weight_hh_l0'])
-            bias_ih_l0 =  model_data['state_dict']['rec.bias_ih_l0']
-            bias_hh_l0 = model_data['state_dict']['rec.bias_hh_l0']
+            bias_ih_l0 =  np.array(model_data['state_dict']['rec.bias_ih_l0'])
+            bias_hh_l0 = np.array(model_data['state_dict']['rec.bias_hh_l0'])
             lin_weight = np.array(model_data['state_dict']['lin.weight'])
             lin_bias = np.array(model_data['state_dict']['lin.bias'])
         except KeyError:
             print("Model file %s is corrupted" % (save_path + "/model.json"))
+
+    # construct PyTorch model
 
     # construct TensorFlow model
     model = keras.Sequential()
@@ -61,22 +63,35 @@ if __name__ == "__main__":
         lstm_weights = []
         lstm_weights.append(np.transpose(WVals))
         lstm_weights.append(np.transpose(UVals))
-        array_bias_ih_l0 = np.array(bias_ih_l0)
-        array_bias_hh_l0 = np.array(bias_hh_l0)
-        BVals = (array_bias_ih_l0 + array_bias_hh_l0)
+        BVals = (bias_ih_l0 + bias_hh_l0)
         lstm_weights.append(BVals) # BVals is (hidden_size*4, )
         lstm_layer = keras.layers.LSTM(hidden_size, activation=None, weights=lstm_weights, return_sequences=True, recurrent_activation=None, use_bias=bias_fl, unit_forget_bias=False)
         model.add(lstm_layer)
     elif unit_type == "GRU":
         gru_weights = []
-        gru_weights.append(np.transpose(WVals))
-        gru_weights.append(np.transpose(UVals))
+
+        WVals = np.transpose(WVals)
+        print(np.shape(WVals))
+        WVals = WVals.reshape(hidden_size, 3, input_size)
+        for subm in WVals:
+            subm[[0, 1]] = subm[[1, 0]]
+        WVals = WVals.reshape(input_size, 3*hidden_size)
+        gru_weights.append(WVals)
+
+        UVals = np.transpose(UVals)
+        UVals = UVals.reshape(hidden_size, 3, hidden_size)
+        for subm in UVals:
+            subm[[0, 1]] = subm[[1, 0]]
+        UVals = UVals.reshape(input_size, 3*hidden_size)
+        gru_weights.append(UVals)
+
         array_bias_ih_l0 = np.array(bias_ih_l0)
         array_bias_hh_l0 = np.array(bias_hh_l0)
         tmp = np.zeros((2, hidden_size*3))
-        tmp[0] = np.transpose(array_bias_hh_l0)
-        tmp[1] = np.transpose(array_bias_ih_l0)
-        BVals = tmp
+        tmp[0] = bias_ih_l0
+        tmp[1] = bias_hh_l0
+        tmp = tmp.reshape(2, 3, -1)
+        BVals = tmp[:, [1, 0, 2], :].reshape((2, -1))
         gru_weights.append(BVals) # BVals is (2, hidden_size*3)
         gru_layer = keras.layers.GRU(hidden_size, activation=None, weights=gru_weights, return_sequences=True, recurrent_activation=None, use_bias=bias_fl)
         model.add(gru_layer)
