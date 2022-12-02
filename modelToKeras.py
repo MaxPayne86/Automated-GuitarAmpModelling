@@ -66,13 +66,15 @@ if __name__ == "__main__":
     model = keras.Sequential()
     model.add(keras.layers.InputLayer(input_shape=(None, input_size)))
 
+    # Optionally inject error in weights to validate conversion
+    #WVals = np.random.rand(*WVals.shape)
+
     if unit_type == "LSTM":
         lstm_weights = []
         lstm_weights.append(np.transpose(WVals))
         lstm_weights.append(np.transpose(UVals))
         BVals = (bias_ih_l0 + bias_hh_l0)
         lstm_weights.append(BVals) # BVals is (hidden_size*4, )
-        #lstm_layer = keras.layers.LSTM(hidden_size, activation=None, weights=lstm_weights, return_sequences=True, recurrent_activation=None, use_bias=bias_fl, unit_forget_bias=False)
         lstm_layer = keras.layers.LSTM(units=hidden_size, return_sequences=True, use_bias=bias_fl, unit_forget_bias=False)
         lstm_layer.build(input_shape=(None, None, input_size))
         lstm_layer.set_weights(lstm_weights)
@@ -103,7 +105,6 @@ if __name__ == "__main__":
         tmp = tmp.reshape(2, 3, -1)
         BVals = tmp[:, [1, 0, 2], :].reshape((2, -1))
         gru_weights.append(BVals) # BVals is (2, hidden_size*3)
-        #gru_layer = keras.layers.GRU(hidden_size, weights=gru_weights, return_sequences=True, use_bias=bias_fl)
         gru_layer = keras.layers.GRU(units=hidden_size, return_sequences=True, use_bias=bias_fl)
         gru_layer.build(input_shape=(None, None, input_size))
         gru_layer.set_weights(gru_weights)
@@ -115,7 +116,6 @@ if __name__ == "__main__":
     dense_weights = []
     dense_weights.append(lin_weight.reshape(hidden_size, 1)) # lin_weight is (1, hidden_size)
     dense_weights.append(lin_bias) # lin_bias is (1,)
-    #dense_layer = keras.layers.Dense(1, weights=dense_weights, kernel_initializer="orthogonal", bias_initializer='random_normal')
     dense_layer = keras.layers.Dense(units=1, use_bias=True)
     dense_layer.build(input_shape=[None, None, hidden_size])
     dense_layer.set_weights(dense_weights)
@@ -140,10 +140,5 @@ if __name__ == "__main__":
 
     loss = keras.losses.mean_squared_error(y_1, y_2)
     print("loss = \n%.8f\n" % np.sum(loss.numpy()))
-
-    print("type(tensorflow_m)=%s" % type(tensorflow_m))
-
-    print("y_1[:10]=%s" % str(y_1[:10]))
-    print("y_2[:10]=%s" % str(y_2[:10]))
 
     save_model(model, results_path + "/model_keras.json", keras.layers.InputLayer, skip=skip)
