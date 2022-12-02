@@ -67,7 +67,7 @@ if __name__ == "__main__":
     model.add(keras.layers.InputLayer(input_shape=(None, input_size)))
 
     # Optionally inject error in weights to validate conversion
-    #WVals = np.random.rand(*WVals.shape)
+    #WVals = np.ones_like(WVals)
 
     if unit_type == "LSTM":
         lstm_weights = []
