@@ -123,7 +123,7 @@ if __name__ == "__main__":
 
     # Compare PyTorch and Tensorflow models
     in_r1 = np.random.uniform(-1.0, 1.0, (1, 2048, input_size))
-    #in_r1 = np.float32(in_r1) # See https://github.com/pytorch/pytorch/issues/2138
+    in_r1 = np.float32(in_r1) # See https://github.com/pytorch/pytorch/issues/2138
     pytorch_m.skip = 0 # We need to assure there is no skip param involved for this test
     pytorch_m.reset_hidden()
     #pytorch_m.double() # See https://github.com/pytorch/pytorch/issues/2138
