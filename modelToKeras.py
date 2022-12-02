@@ -4,6 +4,10 @@ import numpy as np
 from tensorflow import keras
 from model_utils import save_model
 
+import CoreAudioML.miscfuncs as miscfuncs
+import CoreAudioML.networks as networks
+
+import torch
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -28,14 +32,14 @@ if __name__ == "__main__":
         test_lossESR_best = data['test_lossESR_best']
         tmp = min(test_lossESR_final, test_lossESR_best)
         if tmp == test_lossESR_final:
-            model = results_path + "/model.json"
+            model_file = results_path + "/model.json"
         else:
-            model = results_path + "/model_best.json"
+            model_file = results_path + "/model_best.json"
 
-    print("Using %s file" % model)
+    print("Using %s file" % model_file)
 
     # Open model file
-    with open(model) as json_file:
+    with open(model_file) as json_file:
         model_data = json.load(json_file)
         try:
             unit_type = model_data['model_data']['unit_type']
@@ -53,9 +57,10 @@ if __name__ == "__main__":
         except KeyError:
             print("Model file %s is corrupted" % (save_path + "/model.json"))
 
-    # construct PyTorch model
+    # Load PyTorch model
+    pytorch_m = networks.load_model(model_data)
 
-    # construct TensorFlow model
+    # Construct TensorFlow model
     model = keras.Sequential()
     model.add(keras.layers.InputLayer(input_shape=(None, input_size)))
 
@@ -65,7 +70,10 @@ if __name__ == "__main__":
         lstm_weights.append(np.transpose(UVals))
         BVals = (bias_ih_l0 + bias_hh_l0)
         lstm_weights.append(BVals) # BVals is (hidden_size*4, )
-        lstm_layer = keras.layers.LSTM(hidden_size, activation=None, weights=lstm_weights, return_sequences=True, recurrent_activation=None, use_bias=bias_fl, unit_forget_bias=False)
+        #lstm_layer = keras.layers.LSTM(hidden_size, activation=None, weights=lstm_weights, return_sequences=True, recurrent_activation=None, use_bias=bias_fl, unit_forget_bias=False)
+        lstm_layer = keras.layers.LSTM(units=hidden_size, return_sequences=True, use_bias=bias_fl, unit_forget_bias=False)
+        lstm_layer.build(input_shape=(None, None, input_size))
+        lstm_layer.set_weights(lstm_weights)
         model.add(lstm_layer)
     elif unit_type == "GRU":
         gru_weights = []
@@ -93,7 +101,10 @@ if __name__ == "__main__":
         tmp = tmp.reshape(2, 3, -1)
         BVals = tmp[:, [1, 0, 2], :].reshape((2, -1))
         gru_weights.append(BVals) # BVals is (2, hidden_size*3)
-        gru_layer = keras.layers.GRU(hidden_size, activation=None, weights=gru_weights, return_sequences=True, recurrent_activation=None, use_bias=bias_fl)
+        #gru_layer = keras.layers.GRU(hidden_size, weights=gru_weights, return_sequences=True, use_bias=bias_fl)
+        gru_layer = keras.layers.GRU(units=hidden_size, return_sequences=True, use_bias=bias_fl)
+        gru_layer.build(input_shape=(None, None, input_size))
+        gru_layer.set_weights(gru_weights)
         model.add(gru_layer)
     else:
         print("Cannot parse unit_type = %s" % unit_type)
@@ -102,7 +113,33 @@ if __name__ == "__main__":
     dense_weights = []
     dense_weights.append(lin_weight.reshape(hidden_size, 1)) # lin_weight is (1, hidden_size)
     dense_weights.append(lin_bias) # lin_bias is (1,)
-    dense_layer = keras.layers.Dense(1, weights=dense_weights, kernel_initializer="orthogonal", bias_initializer='random_normal')
+    #dense_layer = keras.layers.Dense(1, weights=dense_weights, kernel_initializer="orthogonal", bias_initializer='random_normal')
+    dense_layer = keras.layers.Dense(1)
+    dense_layer.build(input_shape=[None, None, hidden_size])
+    dense_layer.set_weights(dense_weights)
     model.add(dense_layer)
+    model.summary()
+
+    # Compare PyTorch and Tensorflow models
+    in_r1 = np.random.rand(1, 2048, input_size)
+    pytorch_m.skip = 0 # We need to assure there is no skip param involved for this test
+    pytorch_m.reset_hidden()
+    #pytorch_m.double() # See https://github.com/pytorch/pytorch/issues/2138
+    pred_r1_pytorch_m = pytorch_m.forward(torch.from_numpy(in_r1).float())
+
+    tensorflow_m = model
+    tensorflow_m.reset_states()
+    pred_r1_tensorflow_m = tensorflow_m(in_r1)
+
+    y_1 = pred_r1_pytorch_m.detach().numpy()[0, :, 0]
+    y_2 = pred_r1_tensorflow_m.numpy()[0, :, 0]
+
+    loss = keras.losses.mean_squared_error(y_1, y_2)
+    print("loss = \n%.8f\n" % np.sum(loss.numpy()))
+
+    print("type(tensorflow_m)=%s" % type(tensorflow_m))
+
+    print("y_1[:10]=%s" % str(y_1[:10]))
+    print("y_2[:10]=%s" % str(y_2[:10]))
 
     save_model(model, results_path + "/model_keras.json", keras.layers.InputLayer, skip=skip)
