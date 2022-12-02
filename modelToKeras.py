@@ -83,7 +83,6 @@ if __name__ == "__main__":
         gru_weights = []
 
         WVals = np.transpose(WVals)
-        print(np.shape(WVals))
         WVals = WVals.reshape(hidden_size, 3, input_size)
         for subm in WVals:
             subm[[0, 1]] = subm[[1, 0]]
