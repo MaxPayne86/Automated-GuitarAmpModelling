@@ -122,8 +122,8 @@ if __name__ == "__main__":
     model.summary()
 
     # Compare PyTorch and Tensorflow models
-    in_r1 = np.random.rand(1, 2048, input_size)
-    in_r1 = np.float32(in_r1) # See https://github.com/pytorch/pytorch/issues/2138
+    in_r1 = np.random.uniform(-1.0, 1.0, (1, 2048, input_size))
+    #in_r1 = np.float32(in_r1) # See https://github.com/pytorch/pytorch/issues/2138
     pytorch_m.skip = 0 # We need to assure there is no skip param involved for this test
     pytorch_m.reset_hidden()
     #pytorch_m.double() # See https://github.com/pytorch/pytorch/issues/2138
@@ -141,3 +141,13 @@ if __name__ == "__main__":
     print("loss = \n%.8f\n" % np.sum(loss.numpy()))
 
     save_model(model, results_path + "/model_keras.json", keras.layers.InputLayer, skip=skip)
+
+    # Save test data to be used with tests in RTNeural library
+    y = pred_r1_pytorch_m.detach().numpy()[0, :, 0]
+    #y = pred_r1_tensorflow_m.numpy()[0, offset:, 0]
+    if unit_type == "LSTM":
+        np.savetxt("pytorch_lstm_x.csv", in_r1[0, :, 0], delimiter='', newline='\n')
+        np.savetxt("pytorch_lstm_y.csv", y, delimiter='', newline='\n')
+    elif unit_type == "GRU":
+        np.savetxt("pytorch_gru_x.csv", in_r1[0, :, 0], delimiter='', newline='\n')
+        np.savetxt("pytorch_gru_y.csv", y, delimiter='', newline='\n')
