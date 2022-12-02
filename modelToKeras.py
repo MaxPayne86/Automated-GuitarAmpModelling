@@ -59,8 +59,10 @@ if __name__ == "__main__":
 
     # Load PyTorch model
     pytorch_m = networks.load_model(model_data)
+    print(pytorch_m)
 
     # Construct TensorFlow model
+    keras.backend.set_floatx('float32')
     model = keras.Sequential()
     model.add(keras.layers.InputLayer(input_shape=(None, input_size)))
 
@@ -114,7 +116,7 @@ if __name__ == "__main__":
     dense_weights.append(lin_weight.reshape(hidden_size, 1)) # lin_weight is (1, hidden_size)
     dense_weights.append(lin_bias) # lin_bias is (1,)
     #dense_layer = keras.layers.Dense(1, weights=dense_weights, kernel_initializer="orthogonal", bias_initializer='random_normal')
-    dense_layer = keras.layers.Dense(1)
+    dense_layer = keras.layers.Dense(units=1, use_bias=True)
     dense_layer.build(input_shape=[None, None, hidden_size])
     dense_layer.set_weights(dense_weights)
     model.add(dense_layer)
@@ -122,17 +124,19 @@ if __name__ == "__main__":
 
     # Compare PyTorch and Tensorflow models
     in_r1 = np.random.rand(1, 2048, input_size)
+    in_r1 = np.float32(in_r1) # See https://github.com/pytorch/pytorch/issues/2138
     pytorch_m.skip = 0 # We need to assure there is no skip param involved for this test
     pytorch_m.reset_hidden()
     #pytorch_m.double() # See https://github.com/pytorch/pytorch/issues/2138
-    pred_r1_pytorch_m = pytorch_m.forward(torch.from_numpy(in_r1).float())
+    pred_r1_pytorch_m = pytorch_m.forward(torch.from_numpy(in_r1))
 
     tensorflow_m = model
     tensorflow_m.reset_states()
     pred_r1_tensorflow_m = tensorflow_m(in_r1)
 
-    y_1 = pred_r1_pytorch_m.detach().numpy()[0, :, 0]
-    y_2 = pred_r1_tensorflow_m.numpy()[0, :, 0]
+    offset = 512 # Discard first results in loss calculation
+    y_1 = pred_r1_pytorch_m.detach().numpy()[0, offset:, 0]
+    y_2 = pred_r1_tensorflow_m.numpy()[0, offset:, 0]
 
     loss = keras.losses.mean_squared_error(y_1, y_2)
     print("loss = \n%.8f\n" % np.sum(loss.numpy()))
