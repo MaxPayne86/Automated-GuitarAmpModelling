@@ -87,10 +87,10 @@ if __name__ == "__main__":
         gru_weights.append(WVals)
 
         UVals = np.transpose(UVals)
-        UVals = UVals.reshape(hidden_size, 3, hidden_size)
-        for subm in UVals:
-            subm[[0, 1]] = subm[[1, 0]]
-        UVals = UVals.reshape(input_size, 3*hidden_size)
+        #UVals = UVals.reshape(hidden_size, 3, hidden_size)
+        #for subm in UVals:
+        #    subm[[0, 1]] = subm[[1, 0]]
+        #UVals = UVals.reshape(input_size, 3*hidden_size)
         gru_weights.append(UVals)
 
         array_bias_ih_l0 = np.array(bias_ih_l0)
