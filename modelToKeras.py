@@ -145,9 +145,5 @@ if __name__ == "__main__":
     # Save test data to be used with tests in RTNeural library
     y = pred_r1_pytorch_m.detach().numpy()[0, :, 0]
     #y = pred_r1_tensorflow_m.numpy()[0, offset:, 0]
-    if unit_type == "LSTM":
-        np.savetxt("pytorch_lstm_x.csv", in_r1[0, :, 0], delimiter='', newline='\n')
-        np.savetxt("pytorch_lstm_y.csv", y, delimiter='', newline='\n')
-    elif unit_type == "GRU":
-        np.savetxt("pytorch_gru_x.csv", in_r1[0, :, 0], delimiter='', newline='\n')
-        np.savetxt("pytorch_gru_y.csv", y, delimiter='', newline='\n')
+    np.savetxt("pytorch_x.csv", in_r1[0, :, 0], delimiter='', newline='\n')
+    np.savetxt("pytorch_y.csv", y, delimiter='', newline='\n')
