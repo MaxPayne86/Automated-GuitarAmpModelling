@@ -2,10 +2,12 @@ import argparse
 import json
 import numpy as np
 from tensorflow import keras
+from tensorflow import convert_to_tensor
 from model_utils import save_model
 
 import CoreAudioML.miscfuncs as miscfuncs
 import CoreAudioML.networks as networks
+import CoreAudioML.dataset as dataset
 
 import torch
 
@@ -64,25 +66,46 @@ if __name__ == "__main__":
     # Construct TensorFlow model
     keras.backend.set_floatx('float32')
     model = keras.Sequential()
-    model.add(keras.layers.InputLayer(input_shape=(None, input_size)))
+    input_layer = keras.layers.InputLayer(input_shape=(None, None, input_size))
+    #model.add(input_layer)
 
     # Optionally inject error in weights to validate conversion
     #WVals = np.ones_like(WVals)
 
     if unit_type == "LSTM":
         lstm_weights = []
-        lstm_weights.append(np.transpose(WVals))
-        lstm_weights.append(np.transpose(UVals))
+
+        WVals = np.transpose(WVals)
+        print("Imported: p.shape(WVals)=%s" % (str(np.shape(WVals))))
+        #WVals = WVals.reshape(hidden_size, 4, input_size)
+        #for subm in WVals:
+        #    subm[[0, 1]] = subm[[1, 0]]
+        #WVals = WVals.reshape(input_size, 4*hidden_size)
+        lstm_weights.append(WVals)
+
+        UVals = np.transpose(UVals)
+        print("Imported: p.shape(UVals)=%s" % (str(np.shape(UVals))))
+        #UVals = UVals.reshape(hidden_size, 4, hidden_size)
+        #for subm in UVals:
+        #    subm[[0, 1]] = subm[[1, 0]]
+        #UVals = UVals.reshape(hidden_size, 4*hidden_size)
+        lstm_weights.append(UVals)
+
         BVals = (bias_ih_l0 + bias_hh_l0)
+        print("Imported: p.shape(BVals)=%s" % (str(np.shape(BVals))))
         lstm_weights.append(BVals) # BVals is (hidden_size*4, )
-        lstm_layer = keras.layers.LSTM(units=hidden_size, return_sequences=True, use_bias=bias_fl, unit_forget_bias=False)
+        lstm_layer = keras.layers.LSTM(units=hidden_size, activation=None, return_sequences=True, use_bias=bias_fl, unit_forget_bias=False)
         lstm_layer.build(input_shape=(None, None, input_size))
+        weights = lstm_layer.get_weights()
+        for elem in weights:
+            print("Desired: p.shape(elem)=%s" % (str(np.shape(elem))))
         lstm_layer.set_weights(lstm_weights)
         model.add(lstm_layer)
     elif unit_type == "GRU":
         gru_weights = []
 
         WVals = np.transpose(WVals)
+        print("Imported: p.shape(WVals)=%s" % (str(np.shape(WVals))))
         WVals = WVals.reshape(hidden_size, 3, input_size)
         for subm in WVals:
             subm[[0, 1]] = subm[[1, 0]]
@@ -90,10 +113,11 @@ if __name__ == "__main__":
         gru_weights.append(WVals)
 
         UVals = np.transpose(UVals)
-        #UVals = UVals.reshape(hidden_size, 3, hidden_size)
-        #for subm in UVals:
-        #    subm[[0, 1]] = subm[[1, 0]]
-        #UVals = UVals.reshape(input_size, 3*hidden_size)
+        print("Imported: p.shape(UVals)=%s" % (str(np.shape(UVals))))
+        UVals = UVals.reshape(hidden_size, 3, hidden_size)
+        for subm in UVals:
+            subm[[0, 1]] = subm[[1, 0]]
+        UVals = UVals.reshape(hidden_size, 3*hidden_size)
         gru_weights.append(UVals)
 
         array_bias_ih_l0 = np.array(bias_ih_l0)
@@ -103,9 +127,13 @@ if __name__ == "__main__":
         tmp[1] = bias_hh_l0
         tmp = tmp.reshape(2, 3, -1)
         BVals = tmp[:, [1, 0, 2], :].reshape((2, -1))
+        print("Imported: p.shape(BVals)=%s" % (str(np.shape(BVals))))
         gru_weights.append(BVals) # BVals is (2, hidden_size*3)
         gru_layer = keras.layers.GRU(units=hidden_size, return_sequences=True, use_bias=bias_fl)
         gru_layer.build(input_shape=(None, None, input_size))
+        weights = gru_layer.get_weights()
+        for elem in weights:
+            print("Desired: p.shape(elem)=%s" % (str(np.shape(elem))))
         gru_layer.set_weights(gru_weights)
         model.add(gru_layer)
     else:
@@ -119,31 +147,59 @@ if __name__ == "__main__":
     dense_layer.build(input_shape=[None, None, hidden_size])
     dense_layer.set_weights(dense_weights)
     model.add(dense_layer)
+    model.build(input_shape=(None, None, input_size))
+    config = model.get_config()
+    print(config)
     model.summary()
 
     # Compare PyTorch and Tensorflow models
-    in_r1 = np.random.uniform(-1.0, 1.0, (1, 2048, input_size))
-    in_r1 = np.float32(in_r1) # See https://github.com/pytorch/pytorch/issues/2138
+    # Generate input 3D tensor
+    n_samples = 2048
+    #in_r1 = np.random.uniform(-1.0, 1.0, (n_samples, input_size, input_size))
+    #in_r1 = np.float32(in_r1) # See https://github.com/pytorch/pytorch/issues/2138
+    # From wav file
+    data = dataset.DataSet(data_dir='', extensions='')
+    data.create_subset('data')
+    data.load_file('in-gtr-2.wav', set_names='data')
+    in_r1 = data.subsets['data'].data['data'][0]
+    in_r1 = in_r1[32000:(32000+n_samples), :, :].cpu().numpy()
+
+    # PyTorch model prediction
     pytorch_m.skip = 0 # We need to assure there is no skip param involved for this test
     pytorch_m.reset_hidden()
     #pytorch_m.double() # See https://github.com/pytorch/pytorch/issues/2138
-    pred_r1_pytorch_m = pytorch_m.forward(torch.from_numpy(in_r1))
+    with torch.no_grad():
+        pred_r1_pytorch_m = pytorch_m(torch.from_numpy(in_r1))
 
+    # Tensorflow model prediction
     tensorflow_m = model
     tensorflow_m.reset_states()
-    pred_r1_tensorflow_m = tensorflow_m(in_r1)
+    pred_r1_tensorflow_m = tensorflow_m(convert_to_tensor(in_r1))
 
-    offset = 512 # Discard first results in loss calculation
-    y_1 = pred_r1_pytorch_m.detach().numpy()[0, offset:, 0]
-    y_2 = pred_r1_tensorflow_m.numpy()[0, offset:, 0]
+    offset = 0 # If desired, discard first results in loss calculation
+    y_1 = pred_r1_pytorch_m.cpu().numpy()[offset:, 0, 0]
+    y_2 = pred_r1_tensorflow_m.numpy()[offset:, 0, 0]
 
     loss = keras.losses.mean_squared_error(y_1, y_2)
     print("loss = \n%.8f\n" % np.sum(loss.numpy()))
 
+    threshold = 1.0e-8;
+    nErrs = 0;
+    max_error = 0.0;
+    for n in range(0, len(in_r1)):
+        err = abs(y_1[n] - y_2[n])
+        if(err > threshold):
+            #print("%f %f" % (y_1[n], y_2[n]))
+            max_error = max(err, max_error)
+            nErrs = nErrs + 1
+
+    if(nErrs > 0):
+        print("Test FAILED, number of errors: %d" % nErrs)
+        print("Maximum error: %.3f" % max_error)
+
     save_model(model, results_path + "/model_keras.json", keras.layers.InputLayer, skip=skip)
 
     # Save test data to be used with tests in RTNeural library
-    y = pred_r1_pytorch_m.detach().numpy()[0, :, 0]
-    #y = pred_r1_tensorflow_m.numpy()[0, offset:, 0]
-    np.savetxt("pytorch_x.csv", in_r1[0, :, 0], delimiter='', newline='\n')
-    np.savetxt("pytorch_y.csv", y, delimiter='', newline='\n')
+    np.savetxt("pytorch_x.csv", in_r1[:, 0], delimiter='', newline='\n')
+    np.savetxt("pytorch_y.csv", y_1, delimiter='', newline='\n')
+    np.savetxt("pytorch_tf_y.csv", y_2, delimiter='', newline='\n')
