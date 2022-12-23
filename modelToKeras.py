@@ -1,3 +1,6 @@
+# Deps
+# pip3 install torch==1.11.0+cu115 torchvision==0.12.0+cu115 torchaudio==0.11.0+cu115 torchtext==0.12.0 -f https://download.pytorch.org/whl/torch_stable.html
+# pip3 install tensorflow==2.10.1
 import argparse
 import json
 import numpy as np
@@ -161,6 +164,7 @@ if __name__ == "__main__":
     data.load_file('in-gtr-2.wav', set_names='data')
     in_r1 = data.subsets['data'].data['data'][0]
     in_r1 = in_r1[32000:(32000+n_samples), :, :].cpu().numpy()
+    print("Input scalar type = %s" % (str(np.common_type(in_r1))))
 
     # PyTorch model prediction
     pytorch_m.skip = 0 # We need to assure there is no skip param involved for this test
