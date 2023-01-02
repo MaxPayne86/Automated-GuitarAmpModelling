@@ -42,6 +42,3 @@ Data/val/*
 !Data/val/.gitkeep
 Results/*
 !Results/.gitkeep
-!Results/aidadsp-16-RNN-aidadsp-16/model.json
-!Results/aidadsp-16-RNN-aidadsp-16/model_best.json
-!Results/aidadsp-16-RNN-aidadsp-16/training_stats.json
