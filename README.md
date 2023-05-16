@@ -18,7 +18,7 @@ This repository contains neural network training scripts and trained models of g
 
 ### How to use (Google Colab)
 
-Visit the link [here](https://colab.research.google.com/drive/1n3EOnroDSGoj_8PVRP6UEwUXUzPewv8p) to perform the training online
+Visit the link [here](https://colab.research.google.com/github/AidaDSP/Automated-GuitarAmpModelling/blob/aidadsp_devel/AIDA_X_Model_Trainer.ipynb) to perform the training online
 
 ### How to use (Local)
 
