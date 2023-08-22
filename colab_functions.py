@@ -186,6 +186,8 @@ def is_ref_input(input_data):
 
 _V1_BLIP_LOCATIONS = (12_000, 36_000)
 _V1_BLIP_WINDOW = 48_000 # Allows up to 250ms of delay compensation
+_V2_BLIP_LOCATIONS = (24_000, 72_000)
+_V2_BLIP_WINDOW = _V1_BLIP_WINDOW
 def align_target(tg_data, blip_offset=0, blip_locations=_V1_BLIP_LOCATIONS, blip_window=_V1_BLIP_WINDOW):
     """
     Based on _calibrate_delay_v1 from https://github.com/sdatkinson/neural-amp-modeler/blob/413d031b92e011ec0b3e6ab3b865b8632725a219/nam/train/core.py#L60
