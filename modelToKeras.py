@@ -11,6 +11,7 @@ if __name__ == "__main__":
     parser.add_argument('--load_config', '-l', help="Json config file describing the nn and the dataset", default='LSTM-12')
     parser.add_argument('--results_path', '-rp', help="Directory of the resulting model", default='None')
     parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
+    parser.add_argument('--aidax', '-ax', default='', help='The output file extension will be .aidax')
     args = parser.parse_args()
 
     if not args.load_model:
@@ -126,5 +127,11 @@ if __name__ == "__main__":
         input_batch = None
         output_batch = None
         metadata = None
+
+    if args.aidax:
+        output_model_path = results_path + "/model_keras.aidax"
+    else:
+        output_model_path = results_path + "/model_keras.json"
+
     # Using save_model method from model_utils module from RTNeural project
-    save_model(model, results_path + "/model_keras.json", keras.layers.InputLayer, skip=skip, input_batch=input_batch, output_batch=output_batch, metadata=metadata, verbose=False)
+    save_model(model, output_model_path, keras.layers.InputLayer, skip=skip, input_batch=input_batch, output_batch=output_batch, metadata=metadata, verbose=False)
