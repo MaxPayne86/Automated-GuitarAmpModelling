@@ -115,7 +115,7 @@ def nonConditionedWavParse(args):
             splitted_y = audio_splitter(y_all, [0.70, 0.15, 0.15])
         else:
             # Csv file to be named as in file
-            [train_bounds, test_bounds, val_bounds] = parse_csv(os.path.splitext(in_file)[0] + ".csv")
+            [train_bounds, test_bounds, val_bounds] = parse_csv(os.path.dirname(in_file) + '/' + args.csv_file)
             splitted_x = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
             splitted_y = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
             for bounds in train_bounds:
@@ -237,8 +237,8 @@ def conditionedWavParse(args):
             splitted_x = audio_splitter(x_all, [0.70, 0.15, 0.15])
             splitted_y = audio_splitter(y_all, [0.70, 0.15, 0.15])
         else:
-            # Csv file to be named as in file
-            [train_bounds, test_bounds, val_bounds] = parse_csv(os.path.splitext(entry['input'])[0] + ".csv")
+            # Csv file to be placed in same dir of input file
+            [train_bounds, test_bounds, val_bounds] = parse_csv(os.path.dirname(entry['input']) + '/' + args.csv_file)
             splitted_x = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
             splitted_y = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
             for bounds in train_bounds:
@@ -303,7 +303,7 @@ if __name__ == "__main__":
     parser.add_argument('--files', '-f', nargs='+', help='provide input target files in pairs e.g. guitar_in.wav guitar_tg.wav bass_in.wav bass_tg.wav')
     parser.add_argument('--load_config', '-l',
                   help="File path, to a JSON config file, arguments listed in the config file will replace the defaults", default='RNN-aidadsp-1')
-    parser.add_argument('--csv_file', '-csv', action=argparse.BooleanOptionalAction, default=False, help='Use csv file for split bounds')
+    parser.add_argument('--csv_file', '-csv', default='', help='Name of csv file containing split bounds info')
     parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
     parser.add_argument('--parameterize', '-p', action=argparse.BooleanOptionalAction, default=False, help='Perform parameterized training')
     parser.add_argument('--norm', '-n', action=argparse.BooleanOptionalAction, default=False, help='Perform normalization of target tracks so that they will match the volume of the input tracks')
