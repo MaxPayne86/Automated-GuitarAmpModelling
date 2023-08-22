@@ -32,8 +32,7 @@ import argparse
 
 # WARNING! De-noise is currently experimental and just for research / documentation
 _V1_NOISE_LOCATIONS = (0, 6_000)
-_V2_NOISE_LOCATIONS = (0, 6_000)
-#_V2_NOISE_LOCATIONS = (12_000, 18_000) # @TODO: wrong?
+_V2_NOISE_LOCATIONS = (12_000, 18_000)
 _V2_VAL1_LOCATIONS = (8160000, 8592000)
 _V2_VAL2_LOCATIONS = (8592000, 9024000)
 def denoise(method="noisereduce", waveform=np.ndarray([0], dtype=np.float32), samplerate=48000):
@@ -91,8 +90,11 @@ def apply_filter(filter_type='highpass', waveform=None, samplerate=48000, freque
 def create_csv_nam_v1_1_1(path):
     header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
     data = [
-        ['R1', 'train', '50000', '8160000', '8110000', 'FF0000'],
-        ['R2', 'testval', '8160000', '8592000', '432000', '00FFFF']
+        ['R1', 'noise', '0', '6000', '6000', 'FFFF00'],
+        ['R2', 'blips', '12000', '36000', '24000', 'FFFF00'],
+        ['R3', 'train', '50000', '8160000', '8110000', 'FF0000'],
+        ['R4', 'test+val', '8160000', '8592000', '432000', '00FFFF'],
+        ['R5', 'end', '8591968', '8592000', '32', 'FFFF00']
     ]
     with open(path, 'w', encoding='UTF8', newline='') as f:
         writer = csv.writer(f)
@@ -104,8 +106,13 @@ def create_csv_nam_v1_1_1(path):
 def create_csv_nam_v2_0_0(path):
     header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
     data = [
-        ['R1', 'train', '50000', '8160000', '8110000', 'FF0000'],
-        ['R2', 'testval', '8160000', '8592000', '432000', '00FFFF']
+        ['R1', 'noise', '12000', '18000', '6000', 'FFFF00'],
+        ['R2', 'blips', '24000', '72000', '48000', 'FFFF00'],
+        ['R3', 'train', '90000', '8208000', '8118000', 'FF0000'],
+        ['R4', 'test+val', '8208000', '8640000', '432000', '00FFFF'],
+        ['R5', 'val', '8640000', '9072000', '432000', 'FFFF00'],
+        ['R6', 'blips', '9096000', '9144000', '48000', 'FFFF00'],
+        ['R7', 'end', '9167968', '9168000', '32', 'FFFF00']
     ]
     with open(path, 'w', encoding='UTF8', newline='') as f:
         writer = csv.writer(f)
