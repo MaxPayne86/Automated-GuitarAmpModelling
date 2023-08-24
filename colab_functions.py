@@ -287,6 +287,27 @@ def parse_csv(path):
 
     return[train_bounds, test_bounds, val_bounds]
 
+def extract_audio_tag(in_file, path_csv, tag=''):
+    """
+    Extract audio bounds corresponding to tag occurences in a csv file and return them as numpy.ndarray
+    """
+    in_data, in_rate = librosa.load(in_file, sr=None, mono=True)
+    in_data = librosa.resample(in_data, orig_sr=in_rate, target_sr=in_rate)
+    bounds = []
+    with open(path_csv) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        for row in csv_reader:
+            if line_count != 0:
+                if row[1] == tag:
+                    bounds.append([int(row[2]), int(row[3])])
+            line_count = line_count + 1
+    out = np.ndarray([0], dtype=np.float32)
+
+    for bounds in bounds:
+        out = np.append(out, audio_splitter(in_data, bounds, unit='s'))
+    return out
+
 def prep_audio(files, file_name, norm=False, csv_file=False, data_split_ratio=[.7, .15, .15]):
 
     # configs = miscfuncs.json_load(load_config, config_location)
