@@ -308,6 +308,21 @@ def extract_audio_tag(in_file, path_csv, tag=''):
         out = np.append(out, audio_splitter(in_data, bounds, unit='s'))
     return out
 
+def bounds_from_csv(path_csv, tag=''):
+    """
+    Extract bounds corresponding to tag occurences in a csv file
+    """
+    bounds = []
+    with open(path_csv) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        for row in csv_reader:
+            if line_count != 0:
+                if row[1] == tag:
+                    bounds.append([int(row[2]), int(row[3])])
+            line_count = line_count + 1
+    return bounds
+
 def prep_audio(files, file_name, norm=False, csv_file=False, data_split_ratio=[.7, .15, .15]):
 
     # configs = miscfuncs.json_load(load_config, config_location)
