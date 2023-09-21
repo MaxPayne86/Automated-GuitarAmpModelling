@@ -219,6 +219,7 @@ if __name__ == "__main__":
     # Set network save_state flag to true, so when the save_model method is called the network weights are saved
     network.save_state = True
     patience_counter = 0
+    validation_patience_limit_epoch = 0
 
     # This is where training happens
     # the network records the last epoch number, so if training is restarted it will start at the correct epoch number
@@ -258,8 +259,11 @@ if __name__ == "__main__":
         miscfuncs.json_save(train_track, 'training_stats', save_path)
 
         if args.validation_p and patience_counter > args.validation_p:
-            print('validation patience limit reached at epoch ' + str(epoch))
+            validation_patience_limit_epoch = epoch
             break
+
+    if validation_patience_limit_epoch:
+        print('validation patience limit reached at epoch ' + str(validation_patience_limit_epoch))
 
     # Remove dataset from memory
     del dataset
