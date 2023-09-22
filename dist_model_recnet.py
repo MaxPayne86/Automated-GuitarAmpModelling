@@ -13,6 +13,12 @@ import os
 import csv
 from scipy.io.wavfile import write
 from tqdm import tqdm
+import gc
+from auraloss.freq import STFTLoss, MultiResolutionSTFTLoss
+from auraloss.time import LogCoshLoss
+from CoreAudioML.training import auraloss_adapter
+
+from inspect import currentframe, getframeinfo
 
 
 prsr = argparse.ArgumentParser(
@@ -265,10 +271,24 @@ if __name__ == "__main__":
     if validation_patience_limit_epoch:
         print('validation patience limit reached at epoch ' + str(validation_patience_limit_epoch))
 
+    print("done training")
+
+    if cuda:
+        cuda_max_memory_allocated = torch.cuda.max_memory_allocated()
+        train_track['maxmemusage'] = cuda_max_memory_allocated
+        with open(os.path.join(save_path, 'maxmemusage.txt'), 'w') as f:
+            f.write(str(cuda_max_memory_allocated))
+
     # Remove dataset from memory
     del dataset
     # Empty the CUDA Cache
-    # torch.cuda.empty_cache()
+    torch.cuda.empty_cache()
+    # Invoke garbage collector
+    gc.collect()
+
+    meminfo = torch.cuda.mem_get_info()
+    frameinfo = getframeinfo(currentframe())
+    #print("%s %d FREE CUDA Memory %d" % (frameinfo.filename, frameinfo.lineno, meminfo[0]))
 
     # Create a new data set
     dataset = CAMLdataset(data_dir=args.data_location)
@@ -276,24 +296,37 @@ if __name__ == "__main__":
     dataset.create_subset('test')
     dataset.load_file(os.path.join('test', args.file_name), 'test')
 
-    print("done training")
+    # Loss functions to be used in test Dataset
     lossESR = training.ESRLoss()
     lossDC = training.DCLoss()
+    lossLOGCOSH = auraloss_adapter(LogCoshLoss())
+    lossSTFT = auraloss_adapter(STFTLoss())
+    #lossMRSTFT = auraloss_adapter(MultiResolutionSTFTLoss())
 
     print("testing the final model")
     # Test the model the training ended with
     test_output, test_loss = network.process_data(dataset.subsets['test'].data['input'][0],
                                      dataset.subsets['test'].data['target'][0], loss_functions, args.test_chunk)
-    test_loss_ESR = lossESR(test_output, dataset.subsets['test'].data['target'][0])
-    test_loss_DC = lossDC(test_output, dataset.subsets['test'].data['target'][0])
+    with torch.no_grad():
+        test_loss_ESR = lossESR(test_output, dataset.subsets['test'].data['target'][0])
+        test_loss_DC = lossDC(test_output, dataset.subsets['test'].data['target'][0])
+        test_loss_LOGCOSH = lossLOGCOSH(test_output, dataset.subsets['test'].data['target'][0])
+        test_loss_STFT = lossSTFT(test_output, dataset.subsets['test'].data['target'][0])
+        #test_loss_MRSTFT = lossMRSTFT(test_output, dataset.subsets['test'].data['target'][0])
     write(os.path.join(save_path, "test_out_final.wav"), dataset.subsets['test'].fs, test_output.cpu().numpy()[:, 0, 0])
     writer.add_scalar('Testing/FinalTestLoss', test_loss.item())
     writer.add_scalar('Testing/FinalTestESR', test_loss_ESR.item())
     writer.add_scalar('Testing/FinalTestDC', test_loss_DC.item())
+    writer.add_scalar('Testing/FinalTestLOGCOSH', test_loss_LOGCOSH.item())
+    writer.add_scalar('Testing/FinalTestSTFT', test_loss_STFT.item())
+    #writer.add_scalar('Testing/FinalTestMRSTFT', test_loss_MRSTFT.item())
 
     train_track['test_loss_final'] = test_loss.item()
     train_track['test_lossESR_final'] = test_loss_ESR.item()
     train_track['test_lossDC_final'] = test_loss_DC.item()
+    train_track['test_lossLOGCOSH_final'] = test_loss_LOGCOSH.item()
+    train_track['test_lossSTFT_final'] = test_loss_STFT.item()
+    #train_track['test_lossMRSTFT_final'] = test_loss_MRSTFT.item()
 
     # Add input/output reference batch to training stats
     # For input batch in case of conditioned models, we assume all params equal to 0.0
@@ -302,32 +335,36 @@ if __name__ == "__main__":
 
     print("testing the best model")
     # Test the best model
+    del network
     best_val_net = miscfuncs.json_load('model_best', save_path)
     network = load_model(best_val_net)
     test_output, test_loss = network.process_data(dataset.subsets['test'].data['input'][0],
                                      dataset.subsets['test'].data['target'][0], loss_functions, args.test_chunk)
-    test_loss_ESR = lossESR(test_output, dataset.subsets['test'].data['target'][0])
-    test_loss_DC = lossDC(test_output, dataset.subsets['test'].data['target'][0])
+    with torch.no_grad():
+        test_loss_ESR = lossESR(test_output, dataset.subsets['test'].data['target'][0])
+        test_loss_DC = lossDC(test_output, dataset.subsets['test'].data['target'][0])
+        test_loss_LOGCOSH = lossLOGCOSH(test_output, dataset.subsets['test'].data['target'][0])
+        test_loss_STFT = lossSTFT(test_output, dataset.subsets['test'].data['target'][0])
+        #test_loss_MRSTFT = lossMRSTFT(test_output, dataset.subsets['test'].data['target'][0])
     write(os.path.join(save_path, "test_out_best.wav"),
           dataset.subsets['test'].fs, test_output.cpu().numpy()[:, 0, 0])
     writer.add_scalar('Testing/BestTestLoss', test_loss.item())
     writer.add_scalar('Testing/BestTestESR', test_loss_ESR.item())
     writer.add_scalar('Testing/BestTestDC', test_loss_DC.item())
+    writer.add_scalar('Testing/BestTestLOGCOSH', test_loss_LOGCOSH.item())
+    writer.add_scalar('Testing/BestTestSTFT', test_loss_STFT.item())
+    #writer.add_scalar('Testing/BestTestMRSTFT', test_loss_MRSTFT.item())
 
     train_track['test_loss_best'] = test_loss.item()
     train_track['test_lossESR_best'] = test_loss_ESR.item()
     train_track['test_lossDC_best'] = test_loss_DC.item()
+    train_track['test_lossLOGCOSH_best'] = test_loss_LOGCOSH.item()
+    train_track['test_lossSTFT_best'] = test_loss_STFT.item()
+    #train_track['test_lossMRSTFT_best'] = test_loss_MRSTFT.item()
 
     # Add output reference batch to training stats, input already entered previously
     train_track['output_batch_best'] = test_output.cpu().data.numpy()[:2048, 0, 0].tolist()
 
     print("finished training: " + model_name)
 
-    if cuda:
-        cuda_max_memory_allocated = torch.cuda.max_memory_allocated()
-        train_track['maxmemusage'] = cuda_max_memory_allocated
-        with open(os.path.join(save_path, 'maxmemusage.txt'), 'w') as f:
-            f.write(str(cuda_max_memory_allocated))
-
     miscfuncs.json_save(train_track, 'training_stats', save_path)
-
