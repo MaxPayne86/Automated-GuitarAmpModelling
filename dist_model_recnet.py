@@ -323,8 +323,11 @@ if __name__ == "__main__":
 
     print("finished training: " + model_name)
 
-    miscfuncs.json_save(train_track, 'training_stats', save_path)
     if cuda:
+        cuda_max_memory_allocated = torch.cuda.max_memory_allocated()
+        train_track['maxmemusage'] = cuda_max_memory_allocated
         with open(os.path.join(save_path, 'maxmemusage.txt'), 'w') as f:
-            f.write(str(torch.cuda.max_memory_allocated()))
+            f.write(str(cuda_max_memory_allocated))
+
+    miscfuncs.json_save(train_track, 'training_stats', save_path)
 
