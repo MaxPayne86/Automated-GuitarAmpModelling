@@ -11,7 +11,7 @@ import time
 import json
 
 # Example
-# python3 proc_audio.py -l RNN-aidadsp-13b2 -i Data/test/aidadsp-13b2-input.wav -t Data/test/aidadsp-13b2-target.wav -o ./proc.wav
+# python3 proc_audio.py -l Results/2023-09-23-22:10:47_jvm-410h-rock-aidadsp/model_best.json -i Data/test/aidadsp-auto-input.wav -t Data/test/aidadsp-auto-target.wav -o ./proc.wav -sp
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -65,39 +65,41 @@ def proc_audio(args):
         print("test_loss_ESR = %.6f test_loss_DC = %.6f" % (test_loss_ESR.item(), test_loss_DC.item()))
 
     if args.spectrogram:
-        from scipy.fft import fft, fftfreq
         import matplotlib.pyplot as plt
         import numpy as np
-        from scipy.signal.windows import blackman
         from scipy.signal import savgol_filter
-        from random import randint
+        from scipy.signal import spectrogram
         N = 4096
-        #offset = args.end // 2
-        offset = randint(0, args.end - N)
-        # Blackman window
-        w = blackman(N)
-        # Sample spacing
-        T = 1.0 / data.subsets['input'].fs
-        # X axis or frequencies
-        xf = fftfreq(N, T)[0:N//2]
-        # Y axis or FFT
-        ywf = fft(output.numpy()[offset:(offset+N), 0, 0]*w)
-        ywf_dB = 20.0 * np.log10(2.0/N * np.abs(ywf[0:N//2]))
-        ywf_dB_smoothed = savgol_filter(ywf_dB, N//10, 3)
-        max1 = np.max(ywf_dB_smoothed)
-        plt.plot(xf, ywf_dB_smoothed, 'b-', label="Output")
+        f, t, Sxx = spectrogram(output.numpy()[:, 0, 0], fs=data.subsets['input'].fs, window="blackman", nperseg=N, mode='magnitude')
+        Sxx_split = np.array_split(Sxx, np.size(f))
+        Sxx_avg = [np.mean(arr) for arr in Sxx_split]
+        Sxx_peak = [np.max(arr) for arr in Sxx_split]
+        Sxx_avg_dB = 20.0 * np.log10(Sxx_avg)
+        Sxx_peak_dB = 20.0 * np.log10(Sxx_peak)
+        Sxx_avg_dB_smoothed = savgol_filter(Sxx_avg_dB, N//10, 3)
+        Sxx_peak_dB_smoothed = savgol_filter(Sxx_peak_dB, N//10, 3)
+        min1 = np.min(Sxx_peak_dB_smoothed)
+        max1 = np.max(Sxx_peak_dB_smoothed)
+        plt.plot(f, Sxx_peak_dB_smoothed, 'b-', label="Output")
         if args.target_file:
-            ywf = fft(data.subsets['target'].data['data'][0][args.start:args.end].numpy()[offset:(offset+N), 0, 0]*w)
-            ywf_dB = 20.0 * np.log10(2.0/N * np.abs(ywf[0:N//2]))
-            ywf_dB_smoothed = savgol_filter(ywf_dB, N//10, 3)
-            max2 = np.max(ywf_dB_smoothed)
-            plt.plot(xf, ywf_dB_smoothed, 'r-', label="Target")
+            f, t, Sxx = spectrogram(data.subsets['target'].data['data'][0][args.start:args.end].numpy()[:, 0, 0], fs=data.subsets['input'].fs, window="blackman", nperseg=N, mode='magnitude')
+            Sxx_split = np.array_split(Sxx, np.size(f))
+            Sxx_avg = [np.mean(arr) for arr in Sxx_split]
+            Sxx_peak = [np.max(arr) for arr in Sxx_split]
+            Sxx_avg_dB = 20.0 * np.log10(Sxx_avg)
+            Sxx_peak_dB = 20.0 * np.log10(Sxx_peak)
+            Sxx_avg_dB_smoothed = savgol_filter(Sxx_avg_dB, N//10, 3)
+            Sxx_peak_dB_smoothed = savgol_filter(Sxx_peak_dB, N//10, 3)
+            min2 = np.min(Sxx_peak_dB_smoothed)
+            max2 = np.max(Sxx_peak_dB_smoothed)
+            plt.plot(f, Sxx_peak_dB_smoothed, 'r-', label="Target")
         plt.grid()
         plt.xlim([12, data.subsets['input'].fs/4])
-        plt.ylim([max(max1, max2) - 40, max(max1, max2) + 5])
+        #plt.xlim([400, 4000])
+        plt.ylim([min(min1, min2) - 5, max(max1, max2) + 5])
         plt.xlabel("Hz")
         plt.ylabel("dB")
-        plt.title("Smoothed FFT position: %d length: %d" % (offset, N))
+        plt.title("Peak Spectrogram")
         plt.legend()
         plt.savefig('spectrogram.png')
 
