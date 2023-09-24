@@ -97,7 +97,7 @@ def proc_audio(args):
         plt.ylim([max(max1, max2) - 40, max(max1, max2) + 5])
         plt.xlabel("Hz")
         plt.ylabel("dB")
-        plt.title("Smoothed FFT samples[%d:%d]" % (offset, offset + N))
+        plt.title("Smoothed FFT position: %d length: %d" % (offset, N))
         plt.legend()
         plt.savefig('spectrogram.png')
 
