@@ -43,7 +43,6 @@ def proc_audio(args):
     if args.target_file:
         data.create_subset('target')
         data.load_file(args.target_file, set_names='target')
-
         lossESR = training.ESRLoss()
         lossDC = training.DCLoss()
 
