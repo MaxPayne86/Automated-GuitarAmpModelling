@@ -23,6 +23,7 @@ def parse_args():
     parser.add_argument('--input_file', '-i', default='', help='Location of the input file')
     parser.add_argument('--target_file', '-t', default='', help='Location of the target file')
     parser.add_argument('--output_file', '-o', default='', help='Location of the output file')
+    parser.add_argument('--spectrogram', '-sp', action=argparse.BooleanOptionalAction, default=False, help='Create spectrogram')
     parser.add_argument('--start', '-s', type=int, default=-1, help='Start point expressed in samples')
     parser.add_argument('--end', '-e', type=int, default=-1, help='End point expressed in samples')
     return parser.parse_args()
@@ -63,6 +64,43 @@ def proc_audio(args):
         write(args.output_file.rsplit('.', 1)[0]+'_ESR.wav', data.subsets['input'].fs, test_loss_ESR_p.cpu().numpy()[:, 0, 0])
         write(args.output_file.rsplit('.', 1)[0]+'_target.wav', data.subsets['input'].fs, data.subsets['target'].data['data'][0][args.start:args.end].cpu().numpy()[:, 0, 0])
         print("test_loss_ESR = %.6f test_loss_DC = %.6f" % (test_loss_ESR.item(), test_loss_DC.item()))
+
+    if args.spectrogram:
+        from scipy.fft import fft, fftfreq
+        import matplotlib.pyplot as plt
+        import numpy as np
+        from scipy.signal.windows import blackman
+        from scipy.signal import savgol_filter
+        from random import randint
+        N = 4096
+        #offset = args.end // 2
+        offset = randint(0, args.end - N)
+        # Blackman window
+        w = blackman(N)
+        # Sample spacing
+        T = 1.0 / data.subsets['input'].fs
+        # X axis or frequencies
+        xf = fftfreq(N, T)[0:N//2]
+        # Y axis or FFT
+        ywf = fft(output.numpy()[offset:(offset+N), 0, 0]*w)
+        ywf_dB = 20.0 * np.log10(2.0/N * np.abs(ywf[0:N//2]))
+        ywf_dB_smoothed = savgol_filter(ywf_dB, N//10, 3)
+        max1 = np.max(ywf_dB_smoothed)
+        plt.plot(xf, ywf_dB_smoothed, 'b-', label="Output")
+        if args.target_file:
+            ywf = fft(data.subsets['target'].data['data'][0][args.start:args.end].numpy()[offset:(offset+N), 0, 0]*w)
+            ywf_dB = 20.0 * np.log10(2.0/N * np.abs(ywf[0:N//2]))
+            ywf_dB_smoothed = savgol_filter(ywf_dB, N//10, 3)
+            max2 = np.max(ywf_dB_smoothed)
+            plt.plot(xf, ywf_dB_smoothed, 'r-', label="Target")
+        plt.grid()
+        plt.xlim([12, data.subsets['input'].fs/4])
+        plt.ylim([max(max1, max2) - 40, max(max1, max2) + 5])
+        plt.xlabel("Hz")
+        plt.ylabel("dB")
+        plt.title("Smoothed FFT samples[%d:%d]" % (offset, offset + N))
+        plt.legend()
+        plt.savefig('spectrogram.png')
 
     # Output is in this format tuple(tensor, tuple(tensor, tensor))
     write(args.output_file, data.subsets['input'].fs, output.cpu().numpy()[:, 0, 0])
