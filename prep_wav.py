@@ -114,7 +114,7 @@ def nonConditionedWavParse(args):
             splitted_x = audio_splitter(x_all, [0.70, 0.15, 0.15])
             splitted_y = audio_splitter(y_all, [0.70, 0.15, 0.15])
         else:
-            # Csv file to be named as in file
+            # Csv file to be placed in same dir of input file
             [train_bounds, test_bounds, val_bounds] = parse_csv(os.path.dirname(in_file) + '/' + args.csv_file)
             splitted_x = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
             splitted_y = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
@@ -276,7 +276,8 @@ def conditionedWavParse(args):
         all_val_in = np.append(all_val_in, np.append([splitted_x[2]], params_val, axis=0), axis = 1)
         all_val_tg = np.append(all_val_tg, splitted_y[2])
 
-    # Save the wav files
+    print("Saving processed wav files into dataset")
+
     save_wav("Data/train/" + file_name + "-input.wav", rate, all_train_in.T, flatten=False)
     save_wav("Data/test/" + file_name + "-input.wav", rate, all_test_in.T, flatten=False)
     save_wav("Data/val/" + file_name + "-input.wav", rate, all_val_in.T, flatten=False)
