@@ -41,7 +41,7 @@ From now on, we will refer to <THIS_DIR> as the path where you launched above co
 #### Local use, Jupyter Notebook
 
 ```
-docker run --gpus all -v <THIS_DIR>:/workdir:rw -w /workdir -p 8888:8888 --env JUPYTER_TOKEN=aidadsp -it aidadsp/pytorch:latest
+docker run --gpus all -v <THIS_DIR>:/workdir:rw -w /workdir -p 8888:8888 -p 6006:6006 --env JUPYTER_TOKEN=aidadsp -it aidadsp/pytorch:latest
 ```
 
 Jupyter Web UI will be accessible in your browser at http://127.0.0.1:8888, then simply enter the password (aidadsp)
@@ -229,9 +229,20 @@ Note: if you're in google colab, the following goes into a cell
 ```
 
 ### Tensorboard
+
 The `./dist_model.py` has been implemented with PyTorch's Tensorboard hooks. To see the data, run:
+
 ```
-tensorboard --logdir ./TensorboardData
+tensorboard --bind_all --logdir ./TensorboardData
+```
+
+tensorboard web interface will be available at http://127.0.0.1:6006
+
+In alternative, in your Jupyter script just add a block with
+
+```
+%load_ext tensorboard
+%tensorboard --bind_all --logdir TensorboardData
 ```
 
 ### Feedback
