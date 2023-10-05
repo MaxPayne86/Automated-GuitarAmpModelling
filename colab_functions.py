@@ -32,6 +32,11 @@ import librosa
 import json
 import argparse
 
+import PIL.Image
+from torchvision.transforms import ToTensor
+import matplotlib.pyplot as plt
+import io
+
 def smoothed_spectrogram(x, fs=48000, window="hann", size=4096, mode='peak'):
     '''
     Calculate peak spectrogram
@@ -53,6 +58,22 @@ def smoothed_spectrogram(x, fs=48000, window="hann", size=4096, mode='peak'):
         Sxx_peak_dB = 20.0 * np.log10(Sxx_peak)
         Sxx_peak_dB_smoothed = savgol_filter(Sxx_peak_dB, N//10, 3)
         return f, Sxx_peak_dB_smoothed, np.min(Sxx_peak_dB_smoothed), np.max(Sxx_peak_dB_smoothed)
+
+def gen_smoothed_spectrogram_plot(f, target, output, title=''):
+    buf = io.BytesIO()
+    plt.figure()
+    plt.plot(f, target, 'b-', label="Target")
+    plt.plot(f, output, 'r-', label="Output")
+    plt.grid()
+    plt.xlabel("Hz")
+    plt.ylabel("dB")
+    plt.title(title)
+    plt.legend()
+    plt.savefig(buf, format='jpeg')
+    buf.seek(0)
+    img = PIL.Image.open(buf)
+    print(ToTensor()(img).unsqueeze(0)[0].size())
+    return ToTensor()(img).unsqueeze(0)[0]
 
 # WARNING! De-noise is currently experimental and just for research / documentation
 _V1_NOISE_LOCATIONS = (0, 6_000)
