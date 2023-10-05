@@ -26,7 +26,7 @@ if __name__ == "__main__":
             metadata = config_data['metadata']
 
         if args.results_path == "None":
-            results_path = "Results/" + device + '_' + unit_type + '-' + str(hidden_size) + '-' + str(skip)
+            results_path = "Results/" + device
         else:
             results_path = args.results_path
 
