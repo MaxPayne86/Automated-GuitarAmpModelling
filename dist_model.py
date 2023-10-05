@@ -186,7 +186,7 @@ if __name__ == "__main__":
         args.pre_filt = None
 
     # Generate name of directory where results will be saved
-    save_path = os.path.join(args.save_location, model_name)
+    save_path = os.path.join(args.save_location, args.device)
 
     # Check if an existing saved model exists, and load it, otherwise creates a new model
     network = init_model(save_path, args)
