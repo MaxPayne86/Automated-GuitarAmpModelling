@@ -66,37 +66,13 @@ def proc_audio(args):
 
     if args.spectrogram:
         import matplotlib.pyplot as plt
-        import numpy as np
-        from scipy.signal import savgol_filter
-        from scipy.signal import spectrogram
-        N = 4096
-        f, t, Sxx = spectrogram(output.numpy()[:, 0, 0], fs=data.subsets['input'].fs, window="blackman", nperseg=N, mode='magnitude')
-        Sxx_split = np.array_split(Sxx, np.size(f))
-        Sxx_avg = [np.mean(arr) for arr in Sxx_split]
-        Sxx_peak = [np.max(arr) for arr in Sxx_split]
-        Sxx_avg_dB = 20.0 * np.log10(Sxx_avg)
-        Sxx_peak_dB = 20.0 * np.log10(Sxx_peak)
-        Sxx_avg_dB_smoothed = savgol_filter(Sxx_avg_dB, N//10, 3)
-        Sxx_peak_dB_smoothed = savgol_filter(Sxx_peak_dB, N//10, 3)
-        min1 = np.min(Sxx_peak_dB_smoothed)
-        max1 = np.max(Sxx_peak_dB_smoothed)
-        plt.plot(f, Sxx_peak_dB_smoothed, 'b-', label="Output")
+        from colab_functions import smoothed_spectrogram
+        f, y, min_, max_ = smoothed_spectrogram(output.numpy()[:, 0, 0], fs=data.subsets['input'].fs, size=4096)
+        plt.plot(f, y, 'b-', label="Output")
         if args.target_file:
-            f, t, Sxx = spectrogram(data.subsets['target'].data['data'][0][args.start:args.end].numpy()[:, 0, 0], fs=data.subsets['input'].fs, window="blackman", nperseg=N, mode='magnitude')
-            Sxx_split = np.array_split(Sxx, np.size(f))
-            Sxx_avg = [np.mean(arr) for arr in Sxx_split]
-            Sxx_peak = [np.max(arr) for arr in Sxx_split]
-            Sxx_avg_dB = 20.0 * np.log10(Sxx_avg)
-            Sxx_peak_dB = 20.0 * np.log10(Sxx_peak)
-            Sxx_avg_dB_smoothed = savgol_filter(Sxx_avg_dB, N//10, 3)
-            Sxx_peak_dB_smoothed = savgol_filter(Sxx_peak_dB, N//10, 3)
-            min2 = np.min(Sxx_peak_dB_smoothed)
-            max2 = np.max(Sxx_peak_dB_smoothed)
-            plt.plot(f, Sxx_peak_dB_smoothed, 'r-', label="Target")
+            f, y, min_, max_ = smoothed_spectrogram(data.subsets['target'].data['data'][0][args.start:args.end].numpy()[:, 0, 0], fs=data.subsets['input'].fs, size=4096)
+            plt.plot(f, y, 'r-', label="Target")
         plt.grid()
-        plt.xlim([12, data.subsets['input'].fs/4])
-        #plt.xlim([400, 4000])
-        plt.ylim([min(min1, min2) - 5, max(max1, max2) + 5])
         plt.xlabel("Hz")
         plt.ylabel("dB")
         plt.title("Peak Spectrogram")

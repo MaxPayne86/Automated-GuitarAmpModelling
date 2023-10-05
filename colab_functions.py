@@ -20,6 +20,8 @@ import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 from scipy.io.wavfile import write
 from scipy.io import wavfile
+from scipy.signal import spectrogram
+from scipy.signal import savgol_filter
 import numpy as np
 import random
 import torch
@@ -29,6 +31,28 @@ import csv
 import librosa
 import json
 import argparse
+
+def smoothed_spectrogram(x, fs=48000, window="hann", size=4096, mode='peak'):
+    '''
+    Calculate peak spectrogram
+    - x: numpy array, time series expected ndim=1
+    - mode: peak or avg
+    '''
+    if x.ndim < 1 or x.ndim > 1:
+        print("Error: unsupported dimension for input x!")
+    N = size
+    f, t, Sxx = spectrogram(x, fs=fs, window=window, nperseg=N, mode='magnitude')
+    Sxx_split = np.array_split(Sxx, np.size(f))
+    if mode == 'avg':
+        Sxx_avg = [np.mean(arr) for arr in Sxx_split]
+        Sxx_avg_dB = 20.0 * np.log10(Sxx_avg)
+        Sxx_avg_dB_smoothed = savgol_filter(Sxx_avg_dB, N//10, 3)
+        return f, Sxx_avg_dB_smoothed, np.min(Sxx_avg_dB_smoothed), np.max(Sxx_avg_dB_smoothed)
+    else:
+        Sxx_peak = [np.max(arr) for arr in Sxx_split]
+        Sxx_peak_dB = 20.0 * np.log10(Sxx_peak)
+        Sxx_peak_dB_smoothed = savgol_filter(Sxx_peak_dB, N//10, 3)
+        return f, Sxx_peak_dB_smoothed, np.min(Sxx_peak_dB_smoothed), np.max(Sxx_peak_dB_smoothed)
 
 # WARNING! De-noise is currently experimental and just for research / documentation
 _V1_NOISE_LOCATIONS = (0, 6_000)
