@@ -72,7 +72,6 @@ def gen_smoothed_spectrogram_plot(f, target, output, title=''):
     plt.savefig(buf, format='jpeg')
     buf.seek(0)
     img = PIL.Image.open(buf)
-    print(ToTensor()(img).unsqueeze(0)[0].size())
     return ToTensor()(img).unsqueeze(0)[0]
 
 # WARNING! De-noise is currently experimental and just for research / documentation
