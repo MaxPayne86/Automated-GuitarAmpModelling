@@ -19,7 +19,7 @@ from auraloss.time import LogCoshLoss
 from CoreAudioML.training import auraloss_adapter
 
 from inspect import currentframe, getframeinfo
-
+from colab_functions import smoothed_spectrogram, gen_smoothed_spectrogram_plot
 
 prsr = argparse.ArgumentParser(
     description='''This script implements training for neural network amplifier/distortion effects modelling. This is
@@ -303,10 +303,15 @@ if __name__ == "__main__":
     lossSTFT = auraloss_adapter(STFTLoss())
     #lossMRSTFT = auraloss_adapter(MultiResolutionSTFTLoss())
 
+    f, y1, min_, max_ = smoothed_spectrogram(dataset.subsets['test'].data['target'][0].cpu().numpy()[:, 0, 0], fs=dataset.subsets['test'].fs, size=4096)
+
     print("testing the final model")
     # Test the model the training ended with
     test_output, test_loss = network.process_data(dataset.subsets['test'].data['input'][0],
                                      dataset.subsets['test'].data['target'][0], loss_functions, args.test_chunk)
+
+    f, y2, min_, max_ = smoothed_spectrogram(test_output.cpu().numpy()[:, 0, 0], fs=dataset.subsets['test'].fs, size=4096)
+
     with torch.no_grad():
         test_loss_ESR = lossESR(test_output, dataset.subsets['test'].data['target'][0])
         test_loss_DC = lossDC(test_output, dataset.subsets['test'].data['target'][0])
@@ -320,6 +325,8 @@ if __name__ == "__main__":
     writer.add_scalar('Testing/FinalTestLOGCOSH', test_loss_LOGCOSH.item())
     writer.add_scalar('Testing/FinalTestSTFT', test_loss_STFT.item())
     #writer.add_scalar('Testing/FinalTestMRSTFT', test_loss_MRSTFT.item())
+
+    writer.add_image('Testing/FinalPeakSpectrogram', gen_smoothed_spectrogram_plot(f, target=y1, output=y2, title='Testing/FinalPeakSpectrogram'))
 
     train_track['test_loss_final'] = test_loss.item()
     train_track['test_lossESR_final'] = test_loss_ESR.item()
@@ -340,6 +347,9 @@ if __name__ == "__main__":
     network = load_model(best_val_net)
     test_output, test_loss = network.process_data(dataset.subsets['test'].data['input'][0],
                                      dataset.subsets['test'].data['target'][0], loss_functions, args.test_chunk)
+
+    f, y2, min_, max_ = smoothed_spectrogram(test_output.cpu().numpy()[:, 0, 0], fs=dataset.subsets['test'].fs, size=4096)
+
     with torch.no_grad():
         test_loss_ESR = lossESR(test_output, dataset.subsets['test'].data['target'][0])
         test_loss_DC = lossDC(test_output, dataset.subsets['test'].data['target'][0])
@@ -354,6 +364,8 @@ if __name__ == "__main__":
     writer.add_scalar('Testing/BestTestLOGCOSH', test_loss_LOGCOSH.item())
     writer.add_scalar('Testing/BestTestSTFT', test_loss_STFT.item())
     #writer.add_scalar('Testing/BestTestMRSTFT', test_loss_MRSTFT.item())
+
+    writer.add_image('Testing/BestPeakSpectrogram', gen_smoothed_spectrogram_plot(f, target=y1, output=y2, title='Testing/BestPeakSpectrogram'))
 
     train_track['test_loss_best'] = test_loss.item()
     train_track['test_lossESR_best'] = test_loss_ESR.item()
