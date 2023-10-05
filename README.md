@@ -64,7 +64,7 @@ pass -csv arg just open the script to understand how it works.
 **Secondly** you can perform the training passing always the same Configs file where all the infos are stored
 
 ```
-python dist_model_recnet.py -l LSTM-12.json -slen 24000 --seed 39 -lm 0
+python dist_model.py -l LSTM-12.json -slen 24000 --seed 39 -lm 0
 ```
 
 where -slen would setup the chunk length used during training, here ```24000*1/48000 = 500 [ms]``` considering 48000 Hz sampling rate. For the other params, please open the script.
@@ -199,13 +199,13 @@ python proc_audio.py 'path/to/input_audio.wav' 'output_filename.wav' 'Results/pa
 
 ### Training Script
 
-the 'dist_model_recnet.py' script was used to train the example models in the 'Results' directory. At the top of the file the 'argparser' contains a description of all the training script arguments, as well as their default values. To train a model using the default arguments, simply run the model from the command line as follows:
+the 'dist_model.py' script was used to train the example models in the 'Results' directory. At the top of the file the 'argparser' contains a description of all the training script arguments, as well as their default values. To train a model using the default arguments, simply run the model from the command line as follows:
 
-python dist_model_recnet.py
+python dist_model.py
 
-note that you must run this command from a python environment that has the libraries described in 'Python Environment' installed. To use different arguments in the training script you can change the default arguments directly in 'dist_model_recnet.py', or you can direct the 'dist_model_recnet.py' script to look for a config file that contains different arguments, for example by running the script using the following command:
+note that you must run this command from a python environment that has the libraries described in 'Python Environment' installed. To use different arguments in the training script you can change the default arguments directly in 'dist_model.py', or you can direct the 'dist_model.py' script to look for a config file that contains different arguments, for example by running the script using the following command:
 
-python dist_model_recnet.py -l "ht11.json"
+python dist_model.py -l "ht11.json"
 
 Where in this case the script will look for the file ht11.json in the the 'Configs' directory. To create custom config files, the ht11.json file provided can be edited in any text editor.
 
@@ -215,7 +215,7 @@ A trained model contained in one of the 'model.json' or 'model_best.json' files 
 
 ### Determinism
 
-If determinism is desired, `dist_model_recnet.py` provides an option to seed all of the random number generators used at once. However, if NVIDIA CUDA is used, you must also handle the non-deterministic behavior of CUDA for RNN calculations as is described in the [Rev8 Release Notes](https://docs.nvidia.com/deeplearning/cudnn/release-notes/rel_8.html). The user can eliminate the non-deterministic behavior of cuDNN RNN and multi-head attention APIs, by setting a single buffer size in the CUBLAS_WORKSPACE_CONFIG environmental variable, for example, :16:8 or :4096:2
+If determinism is desired, `dist_model.py` provides an option to seed all of the random number generators used at once. However, if NVIDIA CUDA is used, you must also handle the non-deterministic behavior of CUDA for RNN calculations as is described in the [Rev8 Release Notes](https://docs.nvidia.com/deeplearning/cudnn/release-notes/rel_8.html). The user can eliminate the non-deterministic behavior of cuDNN RNN and multi-head attention APIs, by setting a single buffer size in the CUBLAS_WORKSPACE_CONFIG environmental variable, for example, :16:8 or :4096:2
 ```
 CUBLAS_WORKSPACE_CONFIG=:4096:2
 ```
@@ -229,7 +229,7 @@ Note: if you're in google colab, the following goes into a cell
 ```
 
 ### Tensorboard
-The `./dist_model_recnet.py` has been implemented with PyTorch's Tensorboard hooks. To see the data, run:
+The `./dist_model.py` has been implemented with PyTorch's Tensorboard hooks. To see the data, run:
 ```
 tensorboard --logdir ./TensorboardData
 ```
