@@ -207,7 +207,7 @@ if __name__ == "__main__":
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.5, patience=5, verbose=False)
     loss_functions = training.LossWrapper(args.loss_fcns, args.pre_filt)
     train_track = training.TrainTrack()
-    writer = SummaryWriter(os.path.join('TensorboardData', model_name))
+    writer = SummaryWriter(os.path.join('TensorboardData', args.model + '_' + model_name))
 
     # Load dataset
     dataset = CAMLdataset(data_dir=args.data_location)
@@ -314,11 +314,13 @@ if __name__ == "__main__":
 
     with torch.no_grad():
         test_loss_ESR = lossESR(test_output, dataset.subsets['test'].data['target'][0])
+        test_loss_ESR_p = lossESR(test_output, dataset.subsets['test'].data['target'][0], pooling=True)
         test_loss_DC = lossDC(test_output, dataset.subsets['test'].data['target'][0])
         test_loss_LOGCOSH = lossLOGCOSH(test_output, dataset.subsets['test'].data['target'][0])
         test_loss_STFT = lossSTFT(test_output, dataset.subsets['test'].data['target'][0])
         #test_loss_MRSTFT = lossMRSTFT(test_output, dataset.subsets['test'].data['target'][0])
     write(os.path.join(save_path, "test_out_final.wav"), dataset.subsets['test'].fs, test_output.cpu().numpy()[:, 0, 0])
+    write(os.path.join(save_path, "test_final_ESR.wav"), dataset.subsets['test'].fs, test_loss_ESR_p.cpu().numpy()[:, 0, 0])
     writer.add_scalar('Testing/FinalTestLoss', test_loss.item())
     writer.add_scalar('Testing/FinalTestESR', test_loss_ESR.item())
     writer.add_scalar('Testing/FinalTestDC', test_loss_DC.item())
@@ -342,7 +344,7 @@ if __name__ == "__main__":
 
     print("testing the best model")
     # Test the best model
-    del network
+    del network, test_loss_ESR_p
     best_val_net = miscfuncs.json_load('model_best', save_path)
     network = load_model(best_val_net)
     test_output, test_loss = network.process_data(dataset.subsets['test'].data['input'][0],
@@ -352,12 +354,13 @@ if __name__ == "__main__":
 
     with torch.no_grad():
         test_loss_ESR = lossESR(test_output, dataset.subsets['test'].data['target'][0])
+        test_loss_ESR_p = lossESR(test_output, dataset.subsets['test'].data['target'][0], pooling=True)
         test_loss_DC = lossDC(test_output, dataset.subsets['test'].data['target'][0])
         test_loss_LOGCOSH = lossLOGCOSH(test_output, dataset.subsets['test'].data['target'][0])
         test_loss_STFT = lossSTFT(test_output, dataset.subsets['test'].data['target'][0])
         #test_loss_MRSTFT = lossMRSTFT(test_output, dataset.subsets['test'].data['target'][0])
-    write(os.path.join(save_path, "test_out_best.wav"),
-          dataset.subsets['test'].fs, test_output.cpu().numpy()[:, 0, 0])
+    write(os.path.join(save_path, "test_out_best.wav"), dataset.subsets['test'].fs, test_output.cpu().numpy()[:, 0, 0])
+    write(os.path.join(save_path, "test_best_ESR.wav"), dataset.subsets['test'].fs, test_loss_ESR_p.cpu().numpy()[:, 0, 0])
     writer.add_scalar('Testing/BestTestLoss', test_loss.item())
     writer.add_scalar('Testing/BestTestESR', test_loss_ESR.item())
     writer.add_scalar('Testing/BestTestDC', test_loss_DC.item())
