@@ -59,16 +59,20 @@ def smoothed_spectrogram(x, fs=48000, window="hann", size=4096, mode='peak'):
         Sxx_peak_dB_smoothed = savgol_filter(Sxx_peak_dB, N//10, 3)
         return f, Sxx_peak_dB_smoothed, np.min(Sxx_peak_dB_smoothed), np.max(Sxx_peak_dB_smoothed)
 
-def gen_smoothed_spectrogram_plot(f, target, output, title=''):
-    buf = io.BytesIO()
+def gen_smoothed_spectrogram_plot(f=None, target=None, predicted=None, title=''):
     plt.figure()
-    plt.plot(f, target, 'b-', label="Target")
-    plt.plot(f, output, 'r-', label="Output")
+    if target is not None:
+        plt.semilogx(f, target, 'b-', label="Target")
+    plt.semilogx(f, predicted, 'r-', label="Predicted")
     plt.grid()
     plt.xlabel("Hz")
     plt.ylabel("dB")
     plt.title(title)
     plt.legend()
+    return plt
+
+def pyplot_to_tensor(plt=None):
+    buf = io.BytesIO()
     plt.savefig(buf, format='jpeg')
     buf.seek(0)
     img = PIL.Image.open(buf)

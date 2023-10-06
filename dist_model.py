@@ -19,7 +19,7 @@ from auraloss.time import LogCoshLoss
 from CoreAudioML.training import auraloss_adapter
 
 from inspect import currentframe, getframeinfo
-from colab_functions import smoothed_spectrogram, gen_smoothed_spectrogram_plot
+from colab_functions import smoothed_spectrogram, gen_smoothed_spectrogram_plot, pyplot_to_tensor
 
 prsr = argparse.ArgumentParser(
     description='''This script implements training for neural network amplifier/distortion effects modelling. This is
@@ -326,7 +326,7 @@ if __name__ == "__main__":
     writer.add_scalar('Testing/FinalTestSTFT', test_loss_STFT.item())
     #writer.add_scalar('Testing/FinalTestMRSTFT', test_loss_MRSTFT.item())
 
-    writer.add_image('Testing/FinalPeakSpectrogram', gen_smoothed_spectrogram_plot(f, target=y1, output=y2, title='Testing/FinalPeakSpectrogram'))
+    writer.add_image('Testing/FinalPeakSpectrogram', pyplot_to_tensor(gen_smoothed_spectrogram_plot(f, target=y1, predicted=y2, title='Testing/FinalPeakSpectrogram')))
 
     train_track['test_loss_final'] = test_loss.item()
     train_track['test_lossESR_final'] = test_loss_ESR.item()
@@ -365,7 +365,7 @@ if __name__ == "__main__":
     writer.add_scalar('Testing/BestTestSTFT', test_loss_STFT.item())
     #writer.add_scalar('Testing/BestTestMRSTFT', test_loss_MRSTFT.item())
 
-    writer.add_image('Testing/BestPeakSpectrogram', gen_smoothed_spectrogram_plot(f, target=y1, output=y2, title='Testing/BestPeakSpectrogram'))
+    writer.add_image('Testing/BestPeakSpectrogram', pyplot_to_tensor(gen_smoothed_spectrogram_plot(f, target=y1, predicted=y2, title='Testing/BestPeakSpectrogram')))
 
     train_track['test_loss_best'] = test_loss.item()
     train_track['test_lossESR_best'] = test_loss_ESR.item()

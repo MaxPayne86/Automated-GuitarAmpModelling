@@ -66,18 +66,13 @@ def proc_audio(args):
 
     if args.spectrogram:
         import matplotlib.pyplot as plt
-        from colab_functions import smoothed_spectrogram
-        f, y, min_, max_ = smoothed_spectrogram(output.numpy()[:, 0, 0], fs=data.subsets['input'].fs, size=4096)
-        plt.plot(f, y, 'b-', label="Output")
+        from colab_functions import smoothed_spectrogram, gen_smoothed_spectrogram_plot
+        f, y1, min_, max_ = smoothed_spectrogram(output.numpy()[:, 0, 0], fs=data.subsets['input'].fs, size=4096)
         if args.target_file:
-            f, y, min_, max_ = smoothed_spectrogram(data.subsets['target'].data['data'][0][args.start:args.end].numpy()[:, 0, 0], fs=data.subsets['input'].fs, size=4096)
-            plt.plot(f, y, 'r-', label="Target")
-        plt.grid()
-        plt.xlabel("Hz")
-        plt.ylabel("dB")
-        plt.title("Peak Spectrogram")
-        plt.legend()
-        plt.savefig('spectrogram.png')
+            f, y2, min_, max_ = smoothed_spectrogram(data.subsets['target'].data['data'][0][args.start:args.end].numpy()[:, 0, 0], fs=data.subsets['input'].fs, size=4096)
+            gen_smoothed_spectrogram_plot(f, target=y2, predicted=y1, title="Peak Spectrogram").savefig('spectrogram.png')
+        else:
+            gen_smoothed_spectrogram_plot(f, target=None, predicted=y1, title="Peak Spectrogram").savefig('spectrogram.png')
 
     # Output is in this format tuple(tensor, tuple(tensor, tensor))
     write(args.output_file, data.subsets['input'].fs, output.cpu().numpy()[:, 0, 0])
