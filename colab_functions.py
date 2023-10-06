@@ -162,7 +162,7 @@ def create_csv_nam_v1_1_1(path):
         ['R2', 'blips', '12000', '36000', '24000', 'FFFF00'],
         ['R3', 'train', '50000', '8160000', '8110000', 'FF0000'],
         ['R4', 'test+val', '8160000', '8592000', '432000', '00FFFF'],
-        ['R5', 'end', '8591968', '8592000', '32', 'FFFF00']
+        ['R5', 'end', '8592000', '8592032', '32', 'FFFF00']
     ]
     with open(path, 'w', encoding='UTF8', newline='') as f:
         writer = csv.writer(f)
@@ -180,7 +180,7 @@ def create_csv_nam_v2_0_0(path):
         ['R4', 'test+val', '8208000', '8640000', '432000', '00FFFF'],
         ['R5', 'val', '8640000', '9072000', '432000', 'FFFF00'],
         ['R6', 'blips', '9096000', '9144000', '48000', 'FFFF00'],
-        ['R7', 'end', '9167968', '9168000', '32', 'FFFF00']
+        ['R7', 'end', '9168000', '9168032', '32', 'FFFF00']
     ]
     with open(path, 'w', encoding='UTF8', newline='') as f:
         writer = csv.writer(f)
