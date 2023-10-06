@@ -55,6 +55,10 @@ if __name__ == "__main__":
     with open(model) as json_file:
         model_data = json.load(json_file)
         try:
+            model_type = model_data['model_data']['model']
+            if model_type != "SimpleRNN":
+                print("Error! This model type is still unsupported")
+                exit(1)
             unit_type = model_data['model_data']['unit_type']
             input_size = model_data['model_data']['input_size']
             skip = int(model_data['model_data']['skip']) # How many input elements are skipped
@@ -69,6 +73,7 @@ if __name__ == "__main__":
             lin_bias = np.array(model_data['state_dict']['lin.bias'])
         except KeyError:
             print("Model file %s is corrupted" % (model))
+            exit(1)
 
     # Construct TensorFlow model
     model = keras.Sequential()
