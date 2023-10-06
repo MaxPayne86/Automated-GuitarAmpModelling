@@ -170,13 +170,13 @@ if __name__ == "__main__":
         print("args.clip_position = 0x%02x" % args.clip_position)
 
     if args.model == 'SimpleRNN':
-        model_name = args.file_name + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
+        model_name = args.device + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
     elif args.model == 'GatedConvNet':
         model_name = args.model + args.device + '_cs' + str(args.hidden_size) + '_pre_' + args.pre_filt
     elif args.model == 'ConvSimpleRNN':
-        model_name = args.file_name + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
+        model_name = args.device + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
     elif args.model == 'AsymmetricAdvancedClipSimpleRNN':
-        model_name = args.file_name + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.clip_position)
+        model_name = args.device + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.clip_position)
 
     if args.pre_filt == 'A-Weighting':
         args.pre_filt = 'aw'
