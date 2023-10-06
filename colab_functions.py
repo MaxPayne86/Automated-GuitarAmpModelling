@@ -133,6 +133,26 @@ def apply_filter(filter_type='highpass', waveform=None, samplerate=48000, freque
         out = bp(waveform=waveform, sample_rate=samplerate, central_freq=frequency, Q=Q)
     return out.cpu().data.numpy()
 
+# This creates a csv file containing regions for input.wav proposed by current public
+# release of AIDA-X. This file is longer than NAM Dataset, containing human-played dry
+# guitar riffs. According to our experiments a longer Dataset usually improves the final model
+# quality, expecially with RNNs.
+# The content of this file follows Reaper region markers export csv format
+def create_csv_aidax(path):
+    header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
+    data = [
+        ['R1', 'noise', '0', '6000', '6000', 'FFFF00'],
+        ['R2', 'blips', '12000', '36000', '24000', 'FFFF00'],
+        ['R3', 'train', '50000', '8160000', '8110000', 'FF0000'],
+        ['R4', 'test+val', '8160000', '8592000', '432000', '00FFFF'],
+        ['R5', 'train2', '8592000', '24211562', '15619562', 'FF0000'],
+        ['R6', 'end', '24211562', '24211594', '32', 'FFFF00']
+    ]
+    with open(path, 'w', encoding='UTF8', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(data)
+
 # This creates a csv file containing regions for NAM v1_1_1.wav.
 # The content of this file follows Reaper region markers export csv format
 def create_csv_nam_v1_1_1(path):
