@@ -81,8 +81,8 @@ prsr.add_argument('--test_chunk', '-tc', type=int, default=100000, help='Number 
 prsr.add_argument('--model', '-m', default='SimpleRNN', type=str, help='model architecture')
 prsr.add_argument('--input_size', '-is', default=1, type=int, help='1 for mono input data, 2 for stereo, etc ')
 prsr.add_argument('--output_size', '-os', default=1, type=int, help='1 for mono output data, 2 for stereo, etc ')
-prsr.add_argument('--num_blocks', '-nb', default=2, type=int, help='Number of recurrent or convolutional blocks')
-prsr.add_argument('--num_layers', '-nl', default=2, type=int, help='Number of layers in each conv block')
+prsr.add_argument('--num_blocks', '-nb', default=3, type=int, help='Number of recurrent or convolutional blocks')
+prsr.add_argument('--num_layers', '-nl', default=1, type=int, help='Number of layers in each recurrent or conv block')
 prsr.add_argument('--hidden_size', '-hs', default=8, type=int, help='Rec unit hidden state size, or conv channels')
 prsr.add_argument('--kernel_size', '-ks', default=3, type=int, help='kernel size in conv layers')
 prsr.add_argument('--dilation_growth', '-dg', default=2, type=int, help='dilation growth for each layer')
@@ -104,6 +104,7 @@ def init_model(save_path, args):
         try:
             assert model_data['model_data']['model'] == args.model
             assert model_data['model_data']['unit_type'] == args.unit_type
+            assert model_data['model_data']['num_layers'] == args.num_layers
             assert model_data['model_data']['input_size'] == args.input_size
             assert model_data['model_data']['hidden_size'] == args.hidden_size
             assert model_data['model_data']['output_size'] == args.output_size
@@ -116,7 +117,14 @@ def init_model(save_path, args):
         if args.model == 'SimpleRNN':
             from CoreAudioML.networks import SimpleRNN
             network = SimpleRNN(input_size=args.input_size, unit_type=args.unit_type, hidden_size=args.hidden_size,
-                                            output_size=args.output_size, skip=args.skip_con)
+                                            output_size=args.output_size, skip=args.skip_con, num_layers=args.num_layers)
+        elif args.model == 'RecNet':
+            from CoreAudioML.networks import RecNet
+            blocks = []
+            for i in range(0, args.num_blocks):
+                block = {'block_type': args.unit_type, 'input_size': args.input_size, 'output_size': args.output_size, 'hidden_size': args.hidden_size}
+                blocks.append(block)
+            network = RecNet(blocks=blocks, skip=args.skip_con)
         elif args.model == 'GatedConvNet':
             from CoreAudioML.networks import GatedConvNet
             network = GatedConvNet(channels=args.hidden_size, blocks=args.num_blocks,
@@ -161,23 +169,25 @@ if __name__ == "__main__":
     print("args.device = %s" % args.device)
     print("args.file_name = %s" % args.file_name)
     print("args.input_size = %s" % args.input_size)
-    print("args.hidden_size = %d" % args.hidden_size)
-    print("args.unit_type = %s" % args.unit_type)
-    print("args.loss_fcns = %s" % str(args.loss_fcns))
     print("args.skip_con = %d" % args.skip_con)
-    print("args.pre_filt = %s" % args.pre_filt)
-    if args.model == 'AsymmetricAdvancedClipSimpleRNN':
-        print("args.clip_position = 0x%02x" % args.clip_position)
-
     if args.model == 'SimpleRNN':
         model_name = args.device + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
+        print("args.hidden_size = %d" % args.hidden_size)
+        print("args.unit_type = %s" % args.unit_type)
+        print("args.num_layers = %s" % args.num_layers)
     elif args.model == 'GatedConvNet':
         model_name = args.model + args.device + '_cs' + str(args.hidden_size) + '_pre_' + args.pre_filt
     elif args.model == 'ConvSimpleRNN':
         model_name = args.device + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
     elif args.model == 'AsymmetricAdvancedClipSimpleRNN':
         model_name = args.device + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.clip_position)
+        print("args.hidden_size = %d" % args.hidden_size)
+        print("args.unit_type = %s" % args.unit_type)
+        print("args.num_layers = %s" % args.num_layers)
+        print("args.clip_position = 0x%02x" % args.clip_position)
 
+    print("args.loss_fcns = %s" % str(args.loss_fcns))
+    print("args.pre_filt = %s" % args.pre_filt)
     if args.pre_filt == 'A-Weighting':
         args.pre_filt = 'aw'
     elif args.pre_filt == 'high_pass':
