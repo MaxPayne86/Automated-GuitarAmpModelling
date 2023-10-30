@@ -309,8 +309,8 @@ if __name__ == "__main__":
     # Loss functions to be used in test Dataset
     lossESR = training.ESRLoss()
     lossDC = training.DCLoss()
-    lossLOGCOSH = auraloss_adapter(LogCoshLoss())
-    lossSTFT = auraloss_adapter(STFTLoss())
+    #lossLOGCOSH = auraloss_adapter(LogCoshLoss())
+    #lossSTFT = auraloss_adapter(STFTLoss())
     #lossMRSTFT = auraloss_adapter(MultiResolutionSTFTLoss())
 
     f, y1, min_, max_ = smoothed_spectrogram(dataset.subsets['test'].data['target'][0].cpu().numpy()[:, 0, 0], fs=dataset.subsets['test'].fs, size=4096)
@@ -324,18 +324,18 @@ if __name__ == "__main__":
 
     with torch.no_grad():
         test_loss_ESR = lossESR(test_output, dataset.subsets['test'].data['target'][0])
-        test_loss_ESR_p = lossESR(test_output, dataset.subsets['test'].data['target'][0], pooling=True)
+        #test_loss_ESR_p = lossESR(test_output, dataset.subsets['test'].data['target'][0], pooling=True)
         test_loss_DC = lossDC(test_output, dataset.subsets['test'].data['target'][0])
-        test_loss_LOGCOSH = lossLOGCOSH(test_output, dataset.subsets['test'].data['target'][0])
-        test_loss_STFT = lossSTFT(test_output, dataset.subsets['test'].data['target'][0])
+        #test_loss_LOGCOSH = lossLOGCOSH(test_output, dataset.subsets['test'].data['target'][0])
+        #test_loss_STFT = lossSTFT(test_output, dataset.subsets['test'].data['target'][0])
         #test_loss_MRSTFT = lossMRSTFT(test_output, dataset.subsets['test'].data['target'][0])
     write(os.path.join(save_path, "test_out_final.wav"), dataset.subsets['test'].fs, test_output.cpu().numpy()[:, 0, 0])
-    write(os.path.join(save_path, "test_final_ESR.wav"), dataset.subsets['test'].fs, test_loss_ESR_p.cpu().numpy()[:, 0, 0])
+    #write(os.path.join(save_path, "test_final_ESR.wav"), dataset.subsets['test'].fs, test_loss_ESR_p.cpu().numpy()[:, 0, 0])
     writer.add_scalar('Testing/FinalTestLoss', test_loss.item())
     writer.add_scalar('Testing/FinalTestESR', test_loss_ESR.item())
     writer.add_scalar('Testing/FinalTestDC', test_loss_DC.item())
-    writer.add_scalar('Testing/FinalTestLOGCOSH', test_loss_LOGCOSH.item())
-    writer.add_scalar('Testing/FinalTestSTFT', test_loss_STFT.item())
+    #writer.add_scalar('Testing/FinalTestLOGCOSH', test_loss_LOGCOSH.item())
+    #writer.add_scalar('Testing/FinalTestSTFT', test_loss_STFT.item())
     #writer.add_scalar('Testing/FinalTestMRSTFT', test_loss_MRSTFT.item())
 
     writer.add_image('Testing/FinalPeakSpectrogram', pyplot_to_tensor(gen_smoothed_spectrogram_plot(f, target=y1, predicted=y2, title='Testing/FinalPeakSpectrogram')))
@@ -343,8 +343,8 @@ if __name__ == "__main__":
     train_track['test_loss_final'] = test_loss.item()
     train_track['test_lossESR_final'] = test_loss_ESR.item()
     train_track['test_lossDC_final'] = test_loss_DC.item()
-    train_track['test_lossLOGCOSH_final'] = test_loss_LOGCOSH.item()
-    train_track['test_lossSTFT_final'] = test_loss_STFT.item()
+    #train_track['test_lossLOGCOSH_final'] = test_loss_LOGCOSH.item()
+    #train_track['test_lossSTFT_final'] = test_loss_STFT.item()
     #train_track['test_lossMRSTFT_final'] = test_loss_MRSTFT.item()
 
     # Add input/output reference batch to training stats
@@ -354,7 +354,9 @@ if __name__ == "__main__":
 
     print("testing the best model")
     # Test the best model
-    del network, test_loss_ESR_p
+    del network
+    # Invoke garbage collector
+    gc.collect()
     best_val_net = miscfuncs.json_load('model_best', save_path)
     network = load_model(best_val_net)
     test_output, test_loss = network.process_data(dataset.subsets['test'].data['input'][0],
@@ -364,18 +366,18 @@ if __name__ == "__main__":
 
     with torch.no_grad():
         test_loss_ESR = lossESR(test_output, dataset.subsets['test'].data['target'][0])
-        test_loss_ESR_p = lossESR(test_output, dataset.subsets['test'].data['target'][0], pooling=True)
+        #test_loss_ESR_p = lossESR(test_output, dataset.subsets['test'].data['target'][0], pooling=True)
         test_loss_DC = lossDC(test_output, dataset.subsets['test'].data['target'][0])
-        test_loss_LOGCOSH = lossLOGCOSH(test_output, dataset.subsets['test'].data['target'][0])
-        test_loss_STFT = lossSTFT(test_output, dataset.subsets['test'].data['target'][0])
+        #test_loss_LOGCOSH = lossLOGCOSH(test_output, dataset.subsets['test'].data['target'][0])
+        #test_loss_STFT = lossSTFT(test_output, dataset.subsets['test'].data['target'][0])
         #test_loss_MRSTFT = lossMRSTFT(test_output, dataset.subsets['test'].data['target'][0])
     write(os.path.join(save_path, "test_out_best.wav"), dataset.subsets['test'].fs, test_output.cpu().numpy()[:, 0, 0])
-    write(os.path.join(save_path, "test_best_ESR.wav"), dataset.subsets['test'].fs, test_loss_ESR_p.cpu().numpy()[:, 0, 0])
+    #write(os.path.join(save_path, "test_best_ESR.wav"), dataset.subsets['test'].fs, test_loss_ESR_p.cpu().numpy()[:, 0, 0])
     writer.add_scalar('Testing/BestTestLoss', test_loss.item())
     writer.add_scalar('Testing/BestTestESR', test_loss_ESR.item())
     writer.add_scalar('Testing/BestTestDC', test_loss_DC.item())
-    writer.add_scalar('Testing/BestTestLOGCOSH', test_loss_LOGCOSH.item())
-    writer.add_scalar('Testing/BestTestSTFT', test_loss_STFT.item())
+    #writer.add_scalar('Testing/BestTestLOGCOSH', test_loss_LOGCOSH.item())
+    #writer.add_scalar('Testing/BestTestSTFT', test_loss_STFT.item())
     #writer.add_scalar('Testing/BestTestMRSTFT', test_loss_MRSTFT.item())
 
     writer.add_image('Testing/BestPeakSpectrogram', pyplot_to_tensor(gen_smoothed_spectrogram_plot(f, target=y1, predicted=y2, title='Testing/BestPeakSpectrogram')))
@@ -383,8 +385,8 @@ if __name__ == "__main__":
     train_track['test_loss_best'] = test_loss.item()
     train_track['test_lossESR_best'] = test_loss_ESR.item()
     train_track['test_lossDC_best'] = test_loss_DC.item()
-    train_track['test_lossLOGCOSH_best'] = test_loss_LOGCOSH.item()
-    train_track['test_lossSTFT_best'] = test_loss_STFT.item()
+    #train_track['test_lossLOGCOSH_best'] = test_loss_LOGCOSH.item()
+    #train_track['test_lossSTFT_best'] = test_loss_STFT.item()
     #train_track['test_lossMRSTFT_best'] = test_loss_MRSTFT.item()
 
     # Add output reference batch to training stats, input already entered previously
