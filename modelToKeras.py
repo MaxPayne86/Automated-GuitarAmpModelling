@@ -22,6 +22,7 @@ if __name__ == "__main__":
             device = config_data['device']
             unit_type = config_data['unit_type']
             hidden_size = config_data['hidden_size']
+            num_layers = config_data['num_layers'] # @TODO:?
             skip = config_data['skip_con']
             metadata = config_data['metadata']
 
@@ -58,9 +59,10 @@ if __name__ == "__main__":
             model_type = model_data['model_data']['model']
             if model_type != "SimpleRNN":
                 print("Error! This model type is still unsupported")
-                exit(1)
+                raise KeyError
             unit_type = model_data['model_data']['unit_type']
             input_size = model_data['model_data']['input_size']
+            num_layers = model_data['model_data']['num_layers']
             skip = int(model_data['model_data']['skip']) # How many input elements are skipped
             hidden_size = model_data['model_data']['hidden_size']
             output_size = model_data['model_data']['output_size']
