@@ -171,16 +171,16 @@ if __name__ == "__main__":
     print("args.input_size = %s" % args.input_size)
     print("args.skip_con = %d" % args.skip_con)
     if args.model == 'SimpleRNN':
-        model_name = args.device + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
+        model_name = args.device + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.num_layers) + '_' + 'skip' + str(args.skip_con)
         print("args.hidden_size = %d" % args.hidden_size)
         print("args.unit_type = %s" % args.unit_type)
         print("args.num_layers = %s" % args.num_layers)
     elif args.model == 'GatedConvNet':
         model_name = args.model + args.device + '_cs' + str(args.hidden_size) + '_pre_' + args.pre_filt
     elif args.model == 'ConvSimpleRNN':
-        model_name = args.device + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.skip_con)
+        model_name = args.device + '_' + args.unit_type + '-' + str(args.hidden_size) + '_' + 'skip' + str(args.skip_con)
     elif args.model == 'AsymmetricAdvancedClipSimpleRNN':
-        model_name = args.device + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + str(args.clip_position)
+        model_name = args.device + '_' + args.unit_type + '-' + str(args.hidden_size) + '-' + + str(args.num_layers) + '_' + 'clippos' + str(args.clip_position)
         print("args.hidden_size = %d" % args.hidden_size)
         print("args.unit_type = %s" % args.unit_type)
         print("args.num_layers = %s" % args.num_layers)
