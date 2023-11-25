@@ -164,7 +164,6 @@ if __name__ == "__main__":
         args.loss_fcns = eval(args.loss_fcns)
 
     # It's a good moment to print parameters
-    print("")
     print("args.model = %s" % args.model)
     print("args.device = %s" % args.device)
     print("args.file_name = %s" % args.file_name)

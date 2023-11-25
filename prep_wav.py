@@ -23,6 +23,7 @@ import librosa
 
 
 def nonConditionedWavParse(args):
+    print("")
     print("Using config file %s" % args.load_config)
     file_name = ""
     configs = miscfuncs.json_load(args.load_config, args.config_location)
