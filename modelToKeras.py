@@ -11,7 +11,7 @@ if __name__ == "__main__":
     parser.add_argument('--load_config', '-l', help="Json config file describing the nn and the dataset", default='LSTM-12')
     parser.add_argument('--results_path', '-rp', help="Directory of the resulting model", default='None')
     parser.add_argument('--config_location', '-cl', help='Location of the "Configs" directory', default='Configs')
-    parser.add_argument('--aidax', '-ax', help='The output file extension will be .aidax', default='')
+    parser.add_argument('--aidax', '-ax', action=argparse.BooleanOptionalAction, help='The output file extension will be .aidax', default=False)
     args = parser.parse_args()
 
     if not args.load_model:
