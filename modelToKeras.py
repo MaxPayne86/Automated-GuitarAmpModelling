@@ -10,8 +10,8 @@ if __name__ == "__main__":
     parser.add_argument('--load_model', '-lm', help="Json model as exported from Pytorch", default='')
     parser.add_argument('--load_config', '-l', help="Json config file describing the nn and the dataset", default='LSTM-12')
     parser.add_argument('--results_path', '-rp', help="Directory of the resulting model", default='None')
-    parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
-    parser.add_argument('--aidax', '-ax', default='', help='The output file extension will be .aidax')
+    parser.add_argument('--config_location', '-cl', help='Location of the "Configs" directory', default='Configs')
+    parser.add_argument('--aidax', '-ax', help='The output file extension will be .aidax', default='')
     args = parser.parse_args()
 
     if not args.load_model:
@@ -52,7 +52,7 @@ if __name__ == "__main__":
 
     #print("Using %s file" % model)
 
-    # Open model file
+    # Open model file and parse only once params
     with open(model) as json_file:
         model_data = json.load(json_file)
         try:
@@ -60,17 +60,13 @@ if __name__ == "__main__":
             if model_type != "SimpleRNN":
                 print("Error! This model type is still unsupported")
                 raise KeyError
-            unit_type = model_data['model_data']['unit_type']
             input_size = model_data['model_data']['input_size']
             num_layers = model_data['model_data']['num_layers']
-            skip = int(model_data['model_data']['skip']) # How many input elements are skipped
+            unit_type = model_data['model_data']['unit_type']
             hidden_size = model_data['model_data']['hidden_size']
+            skip = int(model_data['model_data']['skip']) # How many input elements are skipped
             output_size = model_data['model_data']['output_size']
             bias_fl = bool(model_data['model_data']['bias_fl'])
-            WVals = np.array(model_data['state_dict']['rec.weight_ih_l0'])
-            UVals = np.array(model_data['state_dict']['rec.weight_hh_l0'])
-            bias_ih_l0 =  np.array(model_data['state_dict']['rec.bias_ih_l0'])
-            bias_hh_l0 = np.array(model_data['state_dict']['rec.bias_hh_l0'])
             lin_weight = np.array(model_data['state_dict']['lin.weight'])
             lin_bias = np.array(model_data['state_dict']['lin.bias'])
         except KeyError:
@@ -81,46 +77,56 @@ if __name__ == "__main__":
     model = keras.Sequential()
     model.add(keras.layers.InputLayer(input_shape=(None, input_size)))
 
-    if unit_type == "LSTM":
-        lstm_weights = []
-        #print("-- Adding %s..." % "rec.weight_ih_l0 / WVals")
-        lstm_weights.append(np.transpose(WVals))
-        #print("-- Adding %s..." % "rec.weight_hh_l0 / UVals")
-        lstm_weights.append(np.transpose(UVals))
-        #print("-- Adding %s..." % "rec.bias_ih_l0, rec.bias_hh_l0 / BVals")
-        BVals = (bias_ih_l0 + bias_hh_l0)
-        lstm_weights.append(BVals) # BVals is (hidden_size*4, )
-        lstm_layer = keras.layers.LSTM(hidden_size, activation=None, weights=lstm_weights, return_sequences=True, recurrent_activation=None, use_bias=bias_fl, unit_forget_bias=False)
-        model.add(lstm_layer)
-    elif unit_type == "GRU":
-        gru_weights = []
-        #print("-- Adding %s..." % "rec.weight_ih_l0 / WVals")
-        WVals = np.transpose(WVals)
-        i = 0
-        for row in WVals:
-            row = np.concatenate((row[hidden_size:hidden_size*2], row[0:hidden_size], row[hidden_size*2:]))
-            WVals[i] = row
-            i = i + 1
-        gru_weights.append(WVals)
-        #print("-- Adding %s..." % "rec.weight_hh_l0 / UVals")
-        UVals = np.transpose(UVals)
-        i = 0
-        for row in UVals:
-            row = np.concatenate((row[hidden_size:hidden_size*2], row[0:hidden_size], row[hidden_size*2:]))
-            UVals[i] = row
-            i = i + 1
-        gru_weights.append(UVals)
-        #print("-- Adding %s..." % "rec.bias_ih_l0, rec.bias_hh_l0 / BVals")
-        tmp = np.zeros((2, hidden_size*3))
-        tmp[0] = np.concatenate((bias_ih_l0[hidden_size:hidden_size*2], bias_ih_l0[0:hidden_size], bias_ih_l0[hidden_size*2:]))
-        tmp[1] = np.concatenate((bias_hh_l0[hidden_size:hidden_size*2], bias_hh_l0[0:hidden_size], bias_hh_l0[hidden_size*2:]))
-        BVals = tmp
-        gru_weights.append(BVals) # BVals is (2, hidden_size*3)
-        gru_layer = keras.layers.GRU(hidden_size, activation=None, weights=gru_weights, return_sequences=True, recurrent_activation=None, use_bias=bias_fl)
-        model.add(gru_layer)
-    else:
-        print("Cannot parse unit_type = %s" % unit_type)
-        exit(1)
+    for num in range(0, num_layers):
+        try:
+            WVals = np.array(model_data['state_dict']['rec.weight_ih_l%d' % num])
+            UVals = np.array(model_data['state_dict']['rec.weight_hh_l%d' % num])
+            bias_ih_l0 =  np.array(model_data['state_dict']['rec.bias_ih_l%d' % num])
+            bias_hh_l0 = np.array(model_data['state_dict']['rec.bias_hh_l%d' % num])
+        except KeyError:
+            print("Model file %s is corrupted" % (model))
+            exit(1)
+
+        if unit_type == "LSTM":
+            lstm_weights = []
+            #print("-- Adding %s..." % "rec.weight_ih_l0 / WVals")
+            lstm_weights.append(np.transpose(WVals))
+            #print("-- Adding %s..." % "rec.weight_hh_l0 / UVals")
+            lstm_weights.append(np.transpose(UVals))
+            #print("-- Adding %s..." % "rec.bias_ih_l0, rec.bias_hh_l0 / BVals")
+            BVals = (bias_ih_l0 + bias_hh_l0)
+            lstm_weights.append(BVals) # BVals is (hidden_size*4, )
+            lstm_layer = keras.layers.LSTM(hidden_size, activation=None, weights=lstm_weights, return_sequences=True, recurrent_activation=None, use_bias=bias_fl, unit_forget_bias=False)
+            model.add(lstm_layer)
+        elif unit_type == "GRU":
+            gru_weights = []
+            #print("-- Adding %s..." % "rec.weight_ih_l0 / WVals")
+            WVals = np.transpose(WVals)
+            i = 0
+            for row in WVals:
+                row = np.concatenate((row[hidden_size:hidden_size*2], row[0:hidden_size], row[hidden_size*2:]))
+                WVals[i] = row
+                i = i + 1
+            gru_weights.append(WVals)
+            #print("-- Adding %s..." % "rec.weight_hh_l0 / UVals")
+            UVals = np.transpose(UVals)
+            i = 0
+            for row in UVals:
+                row = np.concatenate((row[hidden_size:hidden_size*2], row[0:hidden_size], row[hidden_size*2:]))
+                UVals[i] = row
+                i = i + 1
+            gru_weights.append(UVals)
+            #print("-- Adding %s..." % "rec.bias_ih_l0, rec.bias_hh_l0 / BVals")
+            tmp = np.zeros((2, hidden_size*3))
+            tmp[0] = np.concatenate((bias_ih_l0[hidden_size:hidden_size*2], bias_ih_l0[0:hidden_size], bias_ih_l0[hidden_size*2:]))
+            tmp[1] = np.concatenate((bias_hh_l0[hidden_size:hidden_size*2], bias_hh_l0[0:hidden_size], bias_hh_l0[hidden_size*2:]))
+            BVals = tmp
+            gru_weights.append(BVals) # BVals is (2, hidden_size*3)
+            gru_layer = keras.layers.GRU(hidden_size, activation=None, weights=gru_weights, return_sequences=True, recurrent_activation=None, use_bias=bias_fl)
+            model.add(gru_layer)
+        else:
+            print("Cannot parse unit_type = %s" % unit_type)
+            exit(1)
 
     dense_weights = []
     dense_weights.append(lin_weight.reshape(hidden_size, 1)) # lin_weight is (1, hidden_size)
