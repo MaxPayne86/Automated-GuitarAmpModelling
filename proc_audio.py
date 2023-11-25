@@ -11,7 +11,7 @@ import time
 import json
 
 # Example
-# python3 proc_audio.py -l Results/2023-09-23-22:10:47_jvm-410h-rock-aidadsp/model_best.json -i Data/test/aidadsp-auto-input.wav -t Data/test/aidadsp-auto-target.wav -o ./proc.wav -sp
+# python3 proc_audio.py -l Results/2023-10-05-16:38:04_fnd-twin-rev-aidadsp/model_best.json -i Data/test/aidadsp-auto-input.wav -t Data/test/aidadsp-auto-target.wav -o ./proc.wav -sp
 
 def parse_args():
     parser = argparse.ArgumentParser(
