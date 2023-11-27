@@ -41,7 +41,7 @@ From now on, we will refer to <THIS_DIR> as the path where you launched above co
 #### Local use, Jupyter Notebook
 
 ```
-docker run --gpus all -v <THIS_DIR>:/workdir:rw -w /workdir -p 8888:8888 -p 6006:6006 --env JUPYTER_TOKEN=aidadsp -it aidadsp/pytorch:latest
+docker run --gpus all -v <THIS_DIR>:/workdir:rw -w /workdir -p 8888:8888 -p 6006:6006 --env JUPYTER_TOKEN=aidadsp -d --name pytorch aidadsp/pytorch:latest
 ```
 
 Jupyter Web UI will be accessible in your browser at http://127.0.0.1:8888, then simply enter the password (aidadsp)
