@@ -392,5 +392,7 @@ if __name__ == "__main__":
     train_track['output_batch_best'] = test_output.cpu().data.numpy()[:2048, 0, 0].tolist()
 
     print("finished training: " + model_name)
+    from pathlib import Path
+    Path(os.path.join(save_path, args.model + '_' + model_name + '.full_name')).touch()
 
     miscfuncs.json_save(train_track, 'training_stats', save_path)
