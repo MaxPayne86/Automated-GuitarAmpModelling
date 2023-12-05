@@ -64,12 +64,12 @@ def nonConditionedWavParse(args):
 
     for in_file, tg_file in zip(args.files[::2], args.files[1::2]):
         #print("Input file name: %s" % in_file)
-        in_data, in_rate = librosa.load(in_file, sr=None, mono=True)
+        x_all, in_rate = librosa.load(in_file, sr=None, mono=True)
         #print("Target file name: %s" % tg_file)
-        tg_data, tg_rate = librosa.load(tg_file, sr=None, mono=True)
+        y_all, tg_rate = librosa.load(tg_file, sr=None, mono=True)
 
-        #print("Input rate: %d length: %d [samples]" % (in_rate, in_data.size))
-        #print("Target rate: %d length: %d [samples]" % (tg_rate, tg_data.size))
+        #print("Input rate: %d length: %d [samples]" % (in_rate, x_all.size))
+        #print("Target rate: %d length: %d [samples]" % (tg_rate, y_all.size))
 
         if in_rate != tg_rate:
             print("Error! Sample rate needs to be equal")
@@ -77,12 +77,9 @@ def nonConditionedWavParse(args):
 
         if in_rate != 48000 or tg_rate != 48000:
             print("Converting audio sample rate to 48kHz.")
-            in_data = librosa.resample(in_data, orig_sr=in_rate, target_sr=48000)
-            tg_data = librosa.resample(tg_data, orig_sr=tg_rate, target_sr=48000)
+            x_all = librosa.resample(x_all, orig_sr=in_rate, target_sr=48000)
+            y_all = librosa.resample(y_all, orig_sr=tg_rate, target_sr=48000)
         rate = 48000
-
-        x_all = audio_converter(in_data)
-        y_all = audio_converter(tg_data)
 
         # Auto-align
         if blip_locations and blip_window:
@@ -187,12 +184,12 @@ def conditionedWavParse(args):
 
     for entry in params['datasets']:
         #print("Input file name: %s" % entry['input'])
-        in_data, in_rate = librosa.load(entry['input'], sr=None, mono=True)
+        x_all, in_rate = librosa.load(entry['input'], sr=None, mono=True)
         #print("Target file name: %s" % entry['target'])
-        tg_data, tg_rate = librosa.load(entry['target'], sr=None, mono=True)
+        y_all, tg_rate = librosa.load(entry['target'], sr=None, mono=True)
 
-        #print("Input rate: %d length: %d [samples]" % (in_rate, in_data.size))
-        #print("Target rate: %d length: %d [samples]" % (tg_rate, tg_data.size))
+        #print("Input rate: %d length: %d [samples]" % (in_rate, x_all.size))
+        #print("Target rate: %d length: %d [samples]" % (tg_rate, y_all.size))
 
         if in_rate != tg_rate:
             print("Error! Sample rate needs to be equal")
@@ -200,12 +197,9 @@ def conditionedWavParse(args):
 
         if in_rate != 48000 or tg_rate != 48000:
             print("Converting audio sample rate to 48kHz.")
-            in_data = librosa.resample(in_data, orig_sr=in_rate, target_sr=48000)
-            tg_data = librosa.resample(tg_data, orig_sr=tg_rate, target_sr=48000)
+            x_all = librosa.resample(x_all, orig_sr=in_rate, target_sr=48000)
+            y_all = librosa.resample(y_all, orig_sr=tg_rate, target_sr=48000)
         rate = 48000
-
-        x_all = audio_converter(in_data)
-        y_all = audio_converter(tg_data)
 
         # Auto-align
         if blip_locations and blip_window:
