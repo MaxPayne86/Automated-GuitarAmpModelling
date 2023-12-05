@@ -391,11 +391,7 @@ def bounds_from_csv(path_csv, tag=''):
             line_count = line_count + 1
     return bounds
 
-def prep_audio(files, file_name, norm=False, csv_file=False, data_split_ratio=[.7, .15, .15]):
-
-    # configs = miscfuncs.json_load(load_config, config_location)
-    # configs['file_name'] = file_name
-
+def prep_audio(files, file_name, norm=False, denoise=False, csv_file=False, data_split_ratio=[.7, .15, .15]):
     train_in = np.ndarray([0], dtype=np.float32)
     train_tg = np.ndarray([0], dtype=np.float32)
     test_in = np.ndarray([0], dtype=np.float32)
@@ -404,14 +400,14 @@ def prep_audio(files, file_name, norm=False, csv_file=False, data_split_ratio=[.
     val_tg = np.ndarray([0], dtype=np.float32)
     for in_file, tg_file in zip(files[::2], files[1::2]):
         print("Input file name: %s" % in_file)
-        in_data, in_rate = librosa.load(in_file, sr=None, mono=True)
+        x_all, in_rate = librosa.load(in_file, sr=None, mono=True)
         in_file_base = os.path.basename(in_file)
         print("Target file name: %s" % tg_file)
-        tg_data, tg_rate = librosa.load(tg_file, sr=None, mono=True)
+        y_all, tg_rate = librosa.load(tg_file, sr=None, mono=True)
         tg_file_base = os.path.basename(tg_file)
 
-        print("Input rate: %d length: %d [samples]" % (in_rate, in_data.size))
-        print("Target rate: %d length: %d [samples]" % (tg_rate, tg_data.size))
+        print("Input rate: %d length: %d [samples]" % (in_rate, x_all.size))
+        print("Target rate: %d length: %d [samples]" % (tg_rate, y_all.size))
 
         if in_rate != tg_rate:
             print("Error! Sample rate needs to be equal")
@@ -419,37 +415,35 @@ def prep_audio(files, file_name, norm=False, csv_file=False, data_split_ratio=[.
 
         if in_rate != 48000 or tg_rate != 48000:
             print("Converting audio sample rate to 48kHz.")
-            in_data = librosa.resample(in_data, orig_sr=in_rate, target_sr=48000)
-            tg_data = librosa.resample(tg_data, orig_sr=tg_rate, target_sr=48000)
+            x_all = librosa.resample(x_all, orig_sr=in_rate, target_sr=48000)
+            y_all = librosa.resample(y_all, orig_sr=tg_rate, target_sr=48000)
         rate = 48000
 
-        # Normalization
-        if norm:
-            in_lvl = peak(in_data)
-            tg_data = peak(tg_data, in_lvl)
-
-        if is_ref_input(in_data):
-            aligned_tg = align_target(tg_data=tg_data)
-            if aligned_tg is not None:
-                tg_data = aligned_tg
+        # Auto-align
+        if blip_locations and blip_window:
+            y_all_aligned = align_target(tg_data=y_all)
+            if y_all_aligned is not None:
+                y_all = y_all_aligned
             else:
                 print("Error! Was not able to calculate alignment delay!")
                 exit(1)
+        else:
+            print("Warning! Auto-alignment disabled...")
 
-        if(in_data.size != tg_data.size):
-            min_size = min(in_data.size, tg_data.size)
-            print("Adjusting training file lengths...")
-            _in_data = np.resize(in_data, min_size)
-            _tg_data = np.resize(tg_data, min_size)
-            in_data = _in_data
-            tg_data = _tg_data
-            del _in_data
-            del _tg_data
+        if(x_all.size != y_all.size):
+            min_size = min(x_all.size, y_all.size)
+            #print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (in_file, tg_file, min_size))
+            x_all = np.resize(x_all, min_size)
+            y_all = np.resize(y_all, min_size)
 
-        print("Preprocessing the training data...")
+        # Noise reduction, using CPU
+        if denoise:
+            y_all = denoise(waveform=y_all)
 
-        x_all = audio_converter(in_data)
-        y_all = audio_converter(tg_data)
+        # Normalization
+        if norm:
+            in_lvl = peak(x_all)
+            y_all = peak(y_all, in_lvl)
 
         # Default to 70% 15% 15% split
         if not csv_file:
