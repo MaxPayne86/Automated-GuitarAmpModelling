@@ -12,7 +12,7 @@
 # of guitar and bass recorded material will be used for network training.
 
 import CoreAudioML.miscfuncs as miscfuncs
-from CoreAudioML.dataset import audio_converter, audio_splitter
+from CoreAudioML.dataset import audio_splitter
 from scipy.io import wavfile
 import numpy as np
 import argparse
