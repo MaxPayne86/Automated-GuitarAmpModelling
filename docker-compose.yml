@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  aidadsp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: aidadsp
+    environment:
+      - 'JUPYTER_TOKEN=aidadsp'
+    volumes:
+      - ./:/workdir
+    ports:
+      - 8888:8888
+      - 6006:6006
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
