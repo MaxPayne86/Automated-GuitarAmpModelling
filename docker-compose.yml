@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: aidadsp/pytorch:next
     container_name: aidadsp
     environment:
       - 'JUPYTER_TOKEN=aidadsp'
