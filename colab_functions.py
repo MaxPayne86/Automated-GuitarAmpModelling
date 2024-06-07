@@ -50,12 +50,12 @@ def smoothed_spectrogram(x, fs=48000, window="hann", size=4096, mode='peak'):
     Sxx_split = np.array_split(Sxx, np.size(f))
     if mode == 'avg':
         Sxx_avg = [np.mean(arr) for arr in Sxx_split]
-        Sxx_avg_dB = 20.0 * np.log10(Sxx_avg)
+        Sxx_avg_dB = 10.0 * np.log10(Sxx_avg)
         Sxx_avg_dB_smoothed = savgol_filter(Sxx_avg_dB, N//10, 3)
         return f, Sxx_avg_dB_smoothed, np.min(Sxx_avg_dB_smoothed), np.max(Sxx_avg_dB_smoothed)
     else:
         Sxx_peak = [np.max(arr) for arr in Sxx_split]
-        Sxx_peak_dB = 20.0 * np.log10(Sxx_peak)
+        Sxx_peak_dB = 10.0 * np.log10(Sxx_peak)
         Sxx_peak_dB_smoothed = savgol_filter(Sxx_peak_dB, N//10, 3)
         return f, Sxx_peak_dB_smoothed, np.min(Sxx_peak_dB_smoothed), np.max(Sxx_peak_dB_smoothed)
 
