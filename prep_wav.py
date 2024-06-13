@@ -54,6 +54,13 @@ def nonConditionedWavParse(args):
         blip_window = None
     if args.denoise:
         from colab_functions import denoise
+    try:
+        samplerate = configs['samplerate']
+        print("Using samplerate = %.2f" % samplerate)
+    except KeyError:
+        print("Error: config file doesn't have samplerate defined")
+        samplerate = None
+        exit(1)
 
     train_in = np.ndarray([0], dtype=np.float32)
     train_tg = np.ndarray([0], dtype=np.float32)
@@ -68,18 +75,12 @@ def nonConditionedWavParse(args):
         #print("Target file name: %s" % tg_file)
         y_all, tg_rate = librosa.load(tg_file, sr=None, mono=True)
 
-        #print("Input rate: %d length: %d [samples]" % (in_rate, x_all.size))
-        #print("Target rate: %d length: %d [samples]" % (tg_rate, y_all.size))
-
-        if in_rate != tg_rate:
-            print("Error! Sample rate needs to be equal")
-            exit(1)
-
-        if in_rate != 48000 or tg_rate != 48000:
-            print("Converting audio sample rate to 48kHz.")
-            x_all = librosa.resample(x_all, orig_sr=in_rate, target_sr=48000)
-            y_all = librosa.resample(y_all, orig_sr=tg_rate, target_sr=48000)
-        rate = 48000
+        if in_rate != samplerate or tg_rate != samplerate:
+            print("Input samplerate = %.2f, desired samplerate = %.2f" % (in_rate, samplerate))
+            print("Target samplerate = %.2f, desired samplerate = %.2f" % (tg_rate, samplerate))
+            print("Resampling files the desired samplerate")
+            x_all = librosa.resample(x_all, orig_sr=in_rate, target_sr=samplerate)
+            y_all = librosa.resample(y_all, orig_sr=tg_rate, target_sr=samplerate)
 
         # Auto-align
         if blip_locations and blip_window:
@@ -135,14 +136,14 @@ def nonConditionedWavParse(args):
 
     print("Saving processed wav files into dataset")
 
-    save_wav("Data/train/" + file_name + "-input.wav", rate, train_in)
-    save_wav("Data/train/" + file_name + "-target.wav", rate, train_tg)
+    save_wav("Data/train/" + file_name + "-input.wav", samplerate, train_in)
+    save_wav("Data/train/" + file_name + "-target.wav", samplerate, train_tg)
 
-    save_wav("Data/test/" + file_name + "-input.wav", rate, test_in)
-    save_wav("Data/test/" + file_name + "-target.wav", rate, test_tg)
+    save_wav("Data/test/" + file_name + "-input.wav", samplerate, test_in)
+    save_wav("Data/test/" + file_name + "-target.wav", samplerate, test_tg)
 
-    save_wav("Data/val/" + file_name + "-input.wav", rate, val_in)
-    save_wav("Data/val/" + file_name + "-target.wav", rate, val_tg)
+    save_wav("Data/val/" + file_name + "-input.wav", samplerate, val_in)
+    save_wav("Data/val/" + file_name + "-target.wav", samplerate, val_tg)
 
 def conditionedWavParse(args):
     print("Using config file %s" % args.load_config)
@@ -170,6 +171,13 @@ def conditionedWavParse(args):
         blip_window = None
     if args.denoise:
         from colab_functions import denoise
+    try:
+        samplerate = configs['samplerate']
+        print("Using samplerate = %.2f" % samplerate)
+    except KeyError:
+        print("Error: config file doesn't have samplerate defined")
+        samplerate = None
+        exit(1)
 
     params = configs['params']
 
@@ -188,18 +196,12 @@ def conditionedWavParse(args):
         #print("Target file name: %s" % entry['target'])
         y_all, tg_rate = librosa.load(entry['target'], sr=None, mono=True)
 
-        #print("Input rate: %d length: %d [samples]" % (in_rate, x_all.size))
-        #print("Target rate: %d length: %d [samples]" % (tg_rate, y_all.size))
-
-        if in_rate != tg_rate:
-            print("Error! Sample rate needs to be equal")
-            exit(1)
-
-        if in_rate != 48000 or tg_rate != 48000:
-            print("Converting audio sample rate to 48kHz.")
-            x_all = librosa.resample(x_all, orig_sr=in_rate, target_sr=48000)
-            y_all = librosa.resample(y_all, orig_sr=tg_rate, target_sr=48000)
-        rate = 48000
+        if in_rate != samplerate or tg_rate != samplerate:
+            print("Input samplerate = %.2f, desired samplerate = %.2f" % (in_rate, samplerate))
+            print("Target samplerate = %.2f, desired samplerate = %.2f" % (tg_rate, samplerate))
+            print("Resampling files the desired samplerate")
+            x_all = librosa.resample(x_all, orig_sr=in_rate, target_sr=samplerate)
+            y_all = librosa.resample(y_all, orig_sr=tg_rate, target_sr=samplerate)
 
         # Auto-align
         if blip_locations and blip_window:
@@ -273,13 +275,13 @@ def conditionedWavParse(args):
 
     print("Saving processed wav files into dataset")
 
-    save_wav("Data/train/" + file_name + "-input.wav", rate, all_train_in.T, flatten=False)
-    save_wav("Data/test/" + file_name + "-input.wav", rate, all_test_in.T, flatten=False)
-    save_wav("Data/val/" + file_name + "-input.wav", rate, all_val_in.T, flatten=False)
+    save_wav("Data/train/" + file_name + "-input.wav", samplerate, all_train_in.T, flatten=False)
+    save_wav("Data/test/" + file_name + "-input.wav", samplerate, all_test_in.T, flatten=False)
+    save_wav("Data/val/" + file_name + "-input.wav", samplerate, all_val_in.T, flatten=False)
 
-    save_wav("Data/train/" + file_name + "-target.wav", rate, all_train_tg)
-    save_wav("Data/test/" + file_name + "-target.wav", rate, all_test_tg)
-    save_wav("Data/val/" + file_name + "-target.wav", rate, all_val_tg)
+    save_wav("Data/train/" + file_name + "-target.wav", samplerate, all_train_tg)
+    save_wav("Data/test/" + file_name + "-target.wav", samplerate, all_test_tg)
+    save_wav("Data/val/" + file_name + "-target.wav", samplerate, all_val_tg)
 
 def main(args):
     if args.files:
