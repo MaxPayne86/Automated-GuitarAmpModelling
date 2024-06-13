@@ -194,6 +194,7 @@ if __name__ == "__main__":
     elif args.pre_filt == 'None':
         args.pre_filt = None
 
+    args.samplerate = int(args.samplerate)
     print("args.samplerate = %.2f" % str(args.samplerate))
 
     # Generate name of directory where results will be saved

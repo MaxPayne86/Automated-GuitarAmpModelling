@@ -55,7 +55,7 @@ def nonConditionedWavParse(args):
     if args.denoise:
         from colab_functions import denoise
     try:
-        samplerate = configs['samplerate']
+        samplerate = int(configs['samplerate'])
         print("Using samplerate = %.2f" % samplerate)
     except KeyError:
         print("Error: config file doesn't have samplerate defined")
@@ -172,7 +172,7 @@ def conditionedWavParse(args):
     if args.denoise:
         from colab_functions import denoise
     try:
-        samplerate = configs['samplerate']
+        samplerate = int(configs['samplerate'])
         print("Using samplerate = %.2f" % samplerate)
     except KeyError:
         print("Error: config file doesn't have samplerate defined")
