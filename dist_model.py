@@ -195,7 +195,7 @@ if __name__ == "__main__":
         args.pre_filt = None
 
     args.samplerate = int(args.samplerate)
-    print("args.samplerate = %.2f" % str(args.samplerate))
+    print("args.samplerate = %.2f" % args.samplerate)
 
     # Generate name of directory where results will be saved
     save_path = os.path.join(args.save_location, args.device)
