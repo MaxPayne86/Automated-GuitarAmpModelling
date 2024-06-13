@@ -40,7 +40,7 @@ prsr.add_argument('--load_model', '-lm', type=int, default=1, help='load a pretr
 prsr.add_argument('--seed', default=None, type=int, help='seed all of the random number generators if desired')
 
 # pre-processing of the training/val/test data
-prsr.add_argument('--segment_length', '-slen', type=int, default=24000, help='Training audio segment length in samples')
+prsr.add_argument('--segment_length', '-slen', type=int, default=500, help='Training audio segment length in ms')
 
 # number of epochs and validation
 prsr.add_argument('--epochs', '-eps', type=int, default=2000, help='Max number of training epochs to run')
@@ -194,6 +194,8 @@ if __name__ == "__main__":
     elif args.pre_filt == 'None':
         args.pre_filt = None
 
+    print("args.samplerate = %.2f" % str(args.samplerate))
+
     # Generate name of directory where results will be saved
     save_path = os.path.join(args.save_location, args.device)
 
@@ -222,8 +224,9 @@ if __name__ == "__main__":
     dataset = CAMLdataset(data_dir=args.data_location)
 
     # The train dataset is divided into frames of 0.5 seconds according to the paper. To achieve this
-    # 22050 is used as segment_length since sample rate is 44100Hz.
-    dataset.create_subset('train', frame_len=args.segment_length)
+    # 22050 is used as segment_length since sample rate is 44100Hz. Here we calculate the value in samples from ms:
+    segment_length_samples = (args.segment_length / 1000.0) * args.samplerate
+    dataset.create_subset('train', frame_len=segment_length_samples)
     dataset.load_file(os.path.join('train', args.file_name), 'train')
 
     dataset.create_subset('val')
