@@ -226,7 +226,7 @@ if __name__ == "__main__":
 
     # The train dataset is divided into frames of 0.5 seconds according to the paper. To achieve this
     # 22050 is used as segment_length since sample rate is 44100Hz. Here we calculate the value in samples from ms:
-    segment_length_samples = (args.segment_length / 1000.0) * args.samplerate
+    segment_length_samples = int((args.segment_length / 1000.0) * args.samplerate)
     dataset.create_subset('train', frame_len=segment_length_samples)
     dataset.load_file(os.path.join('train', args.file_name), 'train')
 
