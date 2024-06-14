@@ -22,3 +22,4 @@ Data/val/*
 Results/*
 !Results/.gitkeep
 Recordings
+__pycache__
