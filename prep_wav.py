@@ -26,41 +26,18 @@ def nonConditionedWavParse(args):
     print("")
     print("Using config file %s" % args.load_config)
     file_name = ""
+    samplerate = int(48000)
+    csv_file = ""
     configs = miscfuncs.json_load(args.load_config, args.config_location)
     try:
-        file_name = configs['file_name']
-    except KeyError:
-        print("Error: config file doesn't have file_name defined")
+        assert configs['file_name'] == file_name
+        assert int(configs['samplerate']) == samplerate
+        assert configs['csv_file'] == csv_file
+    except AssertionError:
+        print("Config file doesn't contain valid data
         exit(1)
-    try:
-        blip_offset = configs['blip_offset']
-    except KeyError:
-        print("Warning: config file doesn't have blip_offset defined")
-        blip_offset = 0
-    try:
-        blip_window = configs['blip_window']
-    except KeyError:
-        print("Warning: config file doesn't have blip_window defined")
-        blip_window = None
-    try:
-        blip_locations = configs['blip_locations']
-    except KeyError:
-        print("Warning: config file doesn't have blip_locations defined")
-        blip_locations = None
-    try:
-        blip_window = configs['blip_window']
-    except KeyError:
-        print("Warning: config file doesn't have blip_window defined")
-        blip_window = None
-    if args.denoise:
-        from colab_functions import denoise
-    try:
-        samplerate = int(configs['samplerate'])
-        print("Using samplerate = %.2f" % samplerate)
-    except KeyError:
-        print("Error: config file doesn't have samplerate defined")
-        samplerate = None
-        exit(1)
+    print("Using samplerate = %.2f" % samplerate)
+    print("Using csv file: %s" % csv_file)
 
     train_in = np.ndarray([0], dtype=np.float32)
     train_tg = np.ndarray([0], dtype=np.float32)
