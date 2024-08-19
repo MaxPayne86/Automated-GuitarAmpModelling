@@ -331,6 +331,63 @@ def parse_csv(path):
 
     return[train_bounds, test_bounds, val_bounds]
 
+def shift_info(info, shift: int = 0):
+    new_info = {}
+    for key, value in info.items():
+        new_info[key] = (value[0] + shift, value[1] + shift)
+    return new_info
+
+def scale_info(info, scale_factor: float = 1.0):
+    scaled_info = {}
+    for key, value in info.items():
+        scaled_info[key] = tuple(int(v * scale_factor) for v in value)
+    return scaled_info
+
+def convert_csv_to_info(csv_path):
+    info = {}
+    with open(csv_path, 'r', encoding='UTF8') as f:
+        reader = csv.reader(f)
+        header = next(reader)
+        for row in reader:
+            tag, name, start, end, length, color = row
+            info[name] = (int(start), int(end))
+    return info
+
+def convert_info_to_csv(info):
+    header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
+    data = []
+    counter = 1
+    for key, value in info.items():
+        if type(value) == int:
+            pass
+        else:
+            tag = "R%d" % counter
+            name = key
+            start = value[0]
+            end = value[1]
+            length = end - start
+            color = 'FFFF00' # Pick a color
+            data.append([tag, name, start, end, length, color])
+            counter += 1
+
+    return header, data
+
+def save_csv(path, info):
+    header, data = convert_info_to_csv(info)
+
+    with open(path, 'w', encoding='UTF8', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+        writer.writerows(data)
+
+# This method deducts the samplerate of the csv file from the noise duration,
+# which is passed as an argument in milliseconds.
+def get_csv_samplerate(csv_path, noise_duration=500):
+    info = convert_csv_to_info(csv_path)
+    noise_duration_info = info['noise'][1] - info['noise'][0]
+    samplerate = int(noise_duration_info / (noise_duration / 1000.0))
+    return samplerate
+
 def extract_audio_tag(in_file, path_csv, tag=''):
     """
     Extract audio bounds corresponding to tag occurences in a csv file and return them as numpy.ndarray
