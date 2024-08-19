@@ -291,30 +291,6 @@ def align_target(tg_data, blip_offset=0, blip_locations=_V1_BLIP_LOCATIONS, blip
         return np.concatenate((np.zeros(abs(delay)), tg_data)).astype(tg_data.dtype)
     return tg_data[delay:].astype(tg_data.dtype)
 
-def init_model(save_path, load_model, unit_type, input_size, hidden_size, output_size, skip_con):
-    # Search for an existing model in the save directory
-    if miscfuncs.file_check('model.json', save_path) and load_model:
-        print('existing model file found, loading network')
-        model_data = miscfuncs.json_load('model', save_path)
-        # assertions to check that the model.json file is for the right neural network architecture
-        try:
-            assert model_data['model_data']['unit_type'] == unit_type
-            assert model_data['model_data']['input_size'] == input_size
-            assert model_data['model_data']['hidden_size'] == hidden_size
-            assert model_data['model_data']['output_size'] == output_size
-        except AssertionError:
-            print("model file found with network structure not matching config file structure")
-        network = networks.load_model(model_data)
-    # If no existing model is found, create a new one
-    else:
-        print('no saved model found, creating new network')
-        network = networks.SimpleRNN(input_size=input_size, unit_type=unit_type, hidden_size=hidden_size,
-                                     output_size=output_size, skip=skip_con)
-        network.save_state = False
-        network.save_model('model', save_path)
-    return network
-
-
 def save_wav(name, rate, data, flatten=True):
     # print("Writing %s with rate: %d length: %d dtype: %s" % (name, rate, data.size, data.dtype))
     if flatten:
