@@ -20,9 +20,8 @@ import os
 import csv
 from colab_functions import save_wav, peak, align_target
 from colab_functions import convert_csv_to_info, get_info_samplerate, scale_info, save_csv, parse_info
-from nam_utils import STANDARD_SAMPLE_RATE, _DataInfo, _calibrate_delay_v_all
+from nam_utils import _DataInfo, _calibrate_delay_v_all
 import librosa
-
 
 def WavParse(args):
     print("")
@@ -32,7 +31,7 @@ def WavParse(args):
     try:
         file_name = configs['file_name']
         samplerate = int(configs['samplerate'])
-        csv_file = configs['csv_file']
+        csv_file = configs['params']['csv']
         params = configs['params']
     except KeyError as e:
         print(f"Config file is missing the key: {e}")
@@ -72,6 +71,7 @@ def WavParse(args):
 
         # Auto-align
         blip_locations = info['blips']
+        print(f"Blip locations: {blip_locations}")
         compensation = 250 # [ms]
         compensation_samples = int((compensation / 1000.0) * samplerate)
         first_blips_start = info[blips][0] - compensation_samples
@@ -112,7 +112,7 @@ def WavParse(args):
 
         # Noise reduction, using CPU
         if args.denoise:
-            y_all = denoise(waveform=y_all)
+            y_all = denoise(waveform=y_all, noise_locations=info['noise'], samplerate=samplerate)
 
         # Normalization
         if args.norm:
