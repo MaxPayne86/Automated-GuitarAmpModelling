@@ -167,6 +167,8 @@ if __name__ == "__main__":
     print("args.model = %s" % args.model)
     print("args.device = %s" % args.device)
     print("args.file_name = %s" % args.file_name)
+    if args.params['n']: # If there is a parameter n, then the input size is n+1
+        args.input_size = int(args.params['n']) + 1
     print("args.input_size = %s" % args.input_size)
     print("args.skip_con = %d" % args.skip_con)
     if args.model == 'SimpleRNN':
