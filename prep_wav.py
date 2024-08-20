@@ -24,131 +24,7 @@ from nam_utils import STANDARD_SAMPLE_RATE, _DataInfo, _calibrate_delay_v_all
 import librosa
 
 
-def nonConditionedWavParse(args):
-    print("")
-    print("Using config file %s" % args.load_config)
-    configs = miscfuncs.json_load(args.load_config, args.config_location)
-    file_name, samplerate, csv_file = None, None, None
-    try:
-        file_name = configs['file_name']
-        samplerate = int(configs['samplerate'])
-        csv_file = configs['csv_file']
-    except KeyError as e:
-        print(f"Config file is missing the key: {e}")
-        exit(1)
-    print("Using samplerate = %.2f" % samplerate)
-    print("Using csv file: %s" % csv_file)
-    info = convert_csv_to_info(csv_file)
-    info_samplerate = get_info_samplerate(info)
-    if info_samplerate != samplerate:
-        print("Csv file samplerate = %.2f, desired samplerate = %.2f" % (info_samplerate, samplerate))
-        print("Resampling csv file to the desired samplerate")
-        info = scale_info(info, scale_factor=float(samplerate)/float(info_samplerate))
-        csv_file = csv_file.replace(".csv", f"-{samplerate}.csv")
-        save_csv(info, csv_file)
-
-    train_in = np.ndarray([0], dtype=np.float32)
-    train_tg = np.ndarray([0], dtype=np.float32)
-    test_in = np.ndarray([0], dtype=np.float32)
-    test_tg = np.ndarray([0], dtype=np.float32)
-    val_in = np.ndarray([0], dtype=np.float32)
-    val_tg = np.ndarray([0], dtype=np.float32)
-
-    in_file, tg_file = args.files[0], args.files[1]
-    #print("Input file name: %s" % in_file)
-    x_all, in_rate = librosa.load(in_file, sr=None, mono=True)
-    #print("Target file name: %s" % tg_file)
-    y_all, tg_rate = librosa.load(tg_file, sr=None, mono=True)
-
-    if in_rate != samplerate or tg_rate != samplerate:
-        print("Input samplerate = %.2f, desired samplerate = %.2f" % (in_rate, samplerate))
-        print("Target samplerate = %.2f, desired samplerate = %.2f" % (tg_rate, samplerate))
-        print("Resampling files the desired samplerate")
-        x_all = librosa.resample(x_all, orig_sr=in_rate, target_sr=samplerate)
-        y_all = librosa.resample(y_all, orig_sr=tg_rate, target_sr=samplerate)
-
-    # Auto-align
-    blip_locations = info['blips']
-    compensation = 250 # [ms]
-    compensation_samples = int((compensation / 1000.0) * samplerate)
-    first_blips_start = info[blips][0] - compensation_samples
-    t_blips = (info[blips][1] + compensation_samples) - first_blips_start
-
-    # Populate _DataInfo
-    data_info = _DataInfo(
-        major_version=-1,
-        rate=samplerate,
-        t_blips=t_blips,
-        first_blips_start=first_blips_start,
-        t_validate=0,
-        train_start=0,
-        validation_start=0,
-        noise_interval=(0, 6_000),
-        blip_locations=(tuple(blip_locations),),
-    )
-
-    # Calibrate the delay in the input-output pair based on blips
-    delay = _calibrate_delay_v_all(data_info, y_all)
-    print(f"Calibrated delay: {delay} samples")
-
-    # Delay compensation
-    if delay < 0:
-        y_all = np.concatenate(np.zeros(abs(delay)), y_all).astype(np.float32)
-    elif delay >= 0:
-        y_all = y_all[delay:].astype(np.float32)
-    else:
-        print("Error in calculating delay!")
-        raise ValueError
-
-    # Check if the audio files have the same length
-    if(x_all.size != y_all.size):
-        min_size = min(x_all.size, y_all.size)
-        print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (in_file, tg_file, min_size))
-        x_all = np.resize(x_all, min_size)
-        y_all = np.resize(y_all, min_size)
-
-    # Noise reduction, using CPU
-    if args.denoise:
-        y_all = denoise(waveform=y_all)
-
-    # Normalization
-    if args.norm:
-        in_lvl = peak(x_all)
-        y_all = peak(y_all, in_lvl)
-
-    # Split the dataset into train, test, and validation using the info data from the csv file
-    [train_bounds, test_bounds, val_bounds] = parse_info(info)
-    splitted_x = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
-    splitted_y = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
-    for bounds in train_bounds:
-        splitted_x[0] = np.append(splitted_x[0], audio_splitter(x_all, bounds, unit='s'))
-        splitted_y[0] = np.append(splitted_y[0], audio_splitter(y_all, bounds, unit='s'))
-    for bounds in test_bounds:
-        splitted_x[1] = np.append(splitted_x[1], audio_splitter(x_all, bounds, unit='s'))
-        splitted_y[1] = np.append(splitted_y[1], audio_splitter(y_all, bounds, unit='s'))
-    for bounds in val_bounds:
-        splitted_x[2] = np.append(splitted_x[2], audio_splitter(x_all, bounds, unit='s'))
-        splitted_y[2] = np.append(splitted_y[2], audio_splitter(y_all, bounds, unit='s'))
-
-    train_in = np.append(train_in, splitted_x[0])
-    train_tg = np.append(train_tg, splitted_y[0])
-    test_in = np.append(test_in, splitted_x[1])
-    test_tg = np.append(test_tg, splitted_y[1])
-    val_in = np.append(val_in, splitted_x[2])
-    val_tg = np.append(val_tg, splitted_y[2])
-
-    print("Saving processed wav files into dataset")
-
-    save_wav("Data/train/" + file_name + "-input.wav", samplerate, train_in)
-    save_wav("Data/train/" + file_name + "-target.wav", samplerate, train_tg)
-
-    save_wav("Data/test/" + file_name + "-input.wav", samplerate, test_in)
-    save_wav("Data/test/" + file_name + "-target.wav", samplerate, test_tg)
-
-    save_wav("Data/val/" + file_name + "-input.wav", samplerate, val_in)
-    save_wav("Data/val/" + file_name + "-target.wav", samplerate, val_tg)
-
-def conditionedWavParse(args):
+def WavParse(args):
     print("")
     print("Using config file %s" % args.load_config)
     configs = miscfuncs.json_load(args.load_config, args.config_location)
@@ -306,7 +182,6 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--files', '-f', nargs=2, help='provide exactly 2 elements: input.wav target.wav')
     parser.add_argument('--load_config', '-l',
                   help="File path, to a JSON config file, arguments listed in the config file will replace the defaults", default='RNN-aidadsp-1')
     parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
