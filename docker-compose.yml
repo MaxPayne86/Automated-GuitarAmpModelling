@@ -1,10 +1,10 @@
 version: "3.8"
 services:
   aidadsp:
+    image: aidadsp/pytorch:next
     build:
       context: .
       dockerfile: Dockerfile
-    image: aidadsp/pytorch:next
     container_name: aidadsp
     environment:
       - 'JUPYTER_TOKEN=aidadsp'
