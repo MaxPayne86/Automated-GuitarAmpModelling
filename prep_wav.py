@@ -167,25 +167,16 @@ def WavParse(args):
     save_wav("Data/test/" + file_name + "-target.wav", samplerate, all_test_tg)
     save_wav("Data/val/" + file_name + "-target.wav", samplerate, all_val_tg)
 
-def main(args):
-    if args.files:
-        if (len(args.files) % 2) and not args.parameterize:
-            print("Error: you should provide arguments in pairs see help")
-            exit(1)
-
-    if args.parameterize is True:
-        conditionedWavParse(args)
-    else:
-        nonConditionedWavParse(args)
-
     print("Done!")
+
+def main(args):
+    WavParse(args)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--load_config', '-l',
                   help="File path, to a JSON config file, arguments listed in the config file will replace the defaults", default='RNN-aidadsp-1')
     parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
-    parser.add_argument('--parameterize', '-p', action=argparse.BooleanOptionalAction, default=False, help='Perform parameterized training')
     parser.add_argument('--norm', '-n', action=argparse.BooleanOptionalAction, default=False, help='Perform normalization of target tracks so that they will match the volume of the input tracks')
     parser.add_argument('--denoise', '-dn', action=argparse.BooleanOptionalAction, default=False, help='Perform noise removal on target tracks leveraging noisereduce package')
 
