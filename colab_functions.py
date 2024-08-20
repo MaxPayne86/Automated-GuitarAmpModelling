@@ -79,15 +79,11 @@ def pyplot_to_tensor(plt=None):
     return ToTensor()(img).unsqueeze(0)[0]
 
 # WARNING! De-noise is currently experimental and just for research / documentation
-_V1_NOISE_LOCATIONS = (0, 6_000)
-_V2_NOISE_LOCATIONS = (12_000, 18_000)
-_V2_VAL1_LOCATIONS = (8160000, 8592000)
-_V2_VAL2_LOCATIONS = (8592000, 9024000)
-def denoise(method="noisereduce", waveform=np.ndarray([0], dtype=np.float32), samplerate=48000):
+def denoise(method="noisereduce", waveform=np.ndarray([0], dtype=np.float32), noise_locations=(0, 6_000), samplerate=48000):
     import noisereduce as nr
     from CoreAudioML.training import ESRLoss
 
-    noise = waveform[_V2_NOISE_LOCATIONS[0]:_V2_NOISE_LOCATIONS[1]]
+    noise = waveform[noise_locations[0]:noise_locations[1]]
     print("Noise level: %.6f [dBTp]" % peak(noise))
 
     if method == "noisereduce":
@@ -96,22 +92,24 @@ def denoise(method="noisereduce", waveform=np.ndarray([0], dtype=np.float32), sa
         denoise = apply_filter(waveform=waveform, samplerate=samplerate)
     waveform = denoise
 
-    noise = waveform[_V2_NOISE_LOCATIONS[0]:_V2_NOISE_LOCATIONS[1]]
+    noise = waveform[noise_locations[0]:noise_locations[1]]
     print("Noise level after denoise: %.6f [dBTp]" % peak(noise))
-
-    # Calculate lowest theoretical ESR after denoise
-    # this is feasible only with nam v2_0_0 since a repetition of val section
-    # is mandatory for minimum ESR calcs
-    val1_t = torch.tensor(waveform[_V2_VAL1_LOCATIONS[0]:_V2_VAL1_LOCATIONS[1]])
-    val2_t = torch.tensor(waveform[_V2_VAL2_LOCATIONS[0]:_V2_VAL2_LOCATIONS[1]])
-    lossESR = ESRLoss()
-    ESRmin = lossESR(val1_t, val2_t)
-    print("Min theoretical ESR is %.6f" % ESRmin)
 
     return denoise
 
+# Calculate lowest theoretical ESR after denoise
+# this is feasible only if a section, typically val or test is repeated accross the Dataset.
+# NOTE: ESR is calculated without pre-emphasis filter
+def calculate_min_theoretical_esr_loss(waveform, locations=(8160000, 8592000, 8592000, 9024000), samplerate: int = 48000):
+    val1_t = torch.tensor(waveform[locations[0]:locations[1]])
+    val2_t = torch.tensor(waveform[locations[2]:locations[3]])
+    lossESR = ESRLoss()
+    ESRmin = lossESR(val1_t, val2_t)
+    print("Min theoretical ESR is %.6f" % ESRmin)
+    return ESRmin
+
 # Apply a filter using torchaudio.functional
-def apply_filter(filter_type='highpass', waveform=None, samplerate=48000, frequency=120.0, Q=0.707):
+def apply_filter(filter_type='highpass', waveform=None, samplerate: int = 48000, frequency=120.0, Q=0.707):
     try:
         if len(waveform) == 0:
             print("Error: no data to process")
