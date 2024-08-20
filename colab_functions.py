@@ -221,12 +221,10 @@ def peak(data, target=None):
 
     return output
 
-
 def wav2tensor(filepath):
   aud, sr = librosa.load(filepath, sr=None, mono=True)
   aud = librosa.resample(aud, orig_sr=sr, target_sr=48000)
   return torch.tensor(aud)
-
 
 def extract_best_esr_model(dirpath):
   stats_file = dirpath + "/training_stats.json"
@@ -240,7 +238,6 @@ def extract_best_esr_model(dirpath):
     else:
       model_path = dirpath + "/model_best.json"
   return model_path, esr
-
 
 def is_ref_input(input_data):
     ref = np.load("input_ref.npz")['ref']
@@ -460,8 +457,6 @@ def prep_audio(files, file_name, norm=False, denoise=False, csv_file=False, data
     save_wav("Data/val/" + file_name + "-target.wav", rate, val_tg)
 
     # print("Done!")
-
-
 
 if __name__ == "__main__":
     # parser = argparse.ArgumentParser()
