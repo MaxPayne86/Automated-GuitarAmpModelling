@@ -324,7 +324,7 @@ def parse_info(info):
 
 # This method deducts the samplerate from the noise duration,
 # which is passed as an argument in milliseconds.
-def get_info_samplerate(info, noise_duration=500):
+def get_info_samplerate(info, noise_duration: float = 500):
     noise_duration_info = info['noise'][1] - info['noise'][0]
     samplerate = int(noise_duration_info / (noise_duration / 1000.0))
     return samplerate
