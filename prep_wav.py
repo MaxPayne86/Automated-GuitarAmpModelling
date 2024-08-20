@@ -136,38 +136,52 @@ def WavParse(args):
             splitted_x[2] = np.append(splitted_x[2], audio_splitter(x_all, bounds, unit='s'))
             splitted_y[2] = np.append(splitted_y[2], audio_splitter(y_all, bounds, unit='s'))
 
-        # Initialize lists to handle the number of parameters
-        params_train = []
-        params_val = []
-        params_test = []
-        try:
+        if "params" not in entry:
+            args.parameterized = False
+        else:
+            args.parameterized = True
+
+        if args.parameterized:
+            # Initialize lists to handle the number of parameters
+            params_train = []
+            params_val = []
+            params_test = []
             # Create a list of np arrays of the parameter values
             for val in entry["params"]:
                 # Create the parameter arrays
                 params_train.append(np.array([val]*len(splitted_x[0]), dtype=np.float32))
                 params_test.append(np.array([val]*len(splitted_x[1]), dtype=np.float32))
                 params_val.append(np.array([val]*len(splitted_x[2]), dtype=np.float32))
-
             # Convert the lists to numpy arrays
             params_train = np.array(params_train, dtype=np.float32)
             params_val = np.array(params_val, dtype=np.float32)
             params_test = np.array(params_test, dtype=np.float32)
-        except KeyError:
-            continue
 
-        # Append the audio and parameters to the full data sets
-        all_train_in = np.append(all_train_in, np.append([splitted_x[0]], params_train, axis=0), axis = 1)
-        all_train_tg = np.append(all_train_tg, splitted_y[0])
-        all_test_in = np.append(all_test_in, np.append([splitted_x[1]], params_test, axis=0), axis = 1)
-        all_test_tg = np.append(all_test_tg, splitted_y[1])
-        all_val_in = np.append(all_val_in, np.append([splitted_x[2]], params_val, axis=0), axis = 1)
-        all_val_tg = np.append(all_val_tg, splitted_y[2])
+            # Append the audio and parameters to the full data sets
+            all_train_in = np.append(all_train_in, np.append([splitted_x[0]], params_train, axis=0), axis = 1)
+            all_train_tg = np.append(all_train_tg, splitted_y[0])
+            all_test_in = np.append(all_test_in, np.append([splitted_x[1]], params_test, axis=0), axis = 1)
+            all_test_tg = np.append(all_test_tg, splitted_y[1])
+            all_val_in = np.append(all_val_in, np.append([splitted_x[2]], params_val, axis=0), axis = 1)
+            all_val_tg = np.append(all_val_tg, splitted_y[2])
+        else:
+            all_train_in = np.append(all_train_in, splitted_x[0])
+            all_train_tg = np.append(all_train_tg, splitted_y[0])
+            all_test_in = np.append(all_test_in, splitted_x[1])
+            all_test_tg = np.append(all_test_tg, splitted_y[1])
+            all_val_in = np.append(all_val_in, splitted_x[2])
+            all_val_tg = np.append(all_val_tg, splitted_y[2])
 
     print("Saving processed wav files into dataset")
 
-    save_wav("Data/train/" + file_name + "-input.wav", samplerate, all_train_in.T, flatten=False)
-    save_wav("Data/test/" + file_name + "-input.wav", samplerate, all_test_in.T, flatten=False)
-    save_wav("Data/val/" + file_name + "-input.wav", samplerate, all_val_in.T, flatten=False)
+    if args.parameterized:
+        save_wav("Data/train/" + file_name + "-input.wav", samplerate, all_train_in.T, flatten=False)
+        save_wav("Data/test/" + file_name + "-input.wav", samplerate, all_test_in.T, flatten=False)
+        save_wav("Data/val/" + file_name + "-input.wav", samplerate, all_val_in.T, flatten=False)
+    else:
+        save_wav("Data/train/" + file_name + "-input.wav", samplerate, all_train_in)
+        save_wav("Data/test/" + file_name + "-input.wav", samplerate, all_test_in)
+        save_wav("Data/val/" + file_name + "-input.wav", samplerate, all_val_in)
 
     save_wav("Data/train/" + file_name + "-target.wav", samplerate, all_train_tg)
     save_wav("Data/test/" + file_name + "-target.wav", samplerate, all_test_tg)
