@@ -251,46 +251,6 @@ def is_ref_input(input_data):
         return True
     return False
 
-
-_V1_BLIP_LOCATIONS = (12_000, 36_000)
-_V1_BLIP_WINDOW = 48_000 # Allows up to 250ms of delay compensation
-_V2_BLIP_LOCATIONS = (24_000, 72_000)
-_V2_BLIP_WINDOW = 96_000
-def align_target(tg_data, blip_offset=0, blip_locations=_V1_BLIP_LOCATIONS, blip_window=_V1_BLIP_WINDOW):
-    """
-    Based on _calibrate_delay_v1 from https://github.com/sdatkinson/neural-amp-modeler/blob/413d031b92e011ec0b3e6ab3b865b8632725a219/nam/train/core.py#L60
-    Copyright (c) 2022 Steven Atkinson
-    SPDX - License - Identifier: MIT
-    """
-    lookahead = 1_000
-    lookback = 10_000
-    safety_factor = 2
-
-    # Calibrate the trigger:
-    y = tg_data[blip_offset:(blip_offset+blip_window)]
-    y = peak(y, -3.0) # Solve problems with low volumes
-    background_level = np.max(np.abs(y[:6_000]))
-    background_avg = np.mean(np.abs(y[:6_000]))
-    trigger_threshold = max(background_level + 0.01, 1.01 * background_level)
-
-    delays = []
-    for blip_index, i in enumerate(blip_locations, 1):
-
-        start_looking = i - lookahead
-        stop_looking = i + lookback
-        y_scan = y[start_looking:stop_looking]
-        triggered = np.where(np.abs(y_scan) > trigger_threshold)[0]
-        if len(triggered) == 0:
-            return None
-        else:
-            j = triggered[0]
-            delays.append(j + start_looking - i)
-
-    delay = int(np.min(delays)) - safety_factor
-    if delay<0:
-        return np.concatenate((np.zeros(abs(delay)), tg_data)).astype(tg_data.dtype)
-    return tg_data[delay:].astype(tg_data.dtype)
-
 def save_wav(name, rate, data, flatten=True):
     # print("Writing %s with rate: %d length: %d dtype: %s" % (name, rate, data.size, data.dtype))
     if flatten:
