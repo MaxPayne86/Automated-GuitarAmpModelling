@@ -298,39 +298,6 @@ def save_wav(name, rate, data, flatten=True):
     else:
         wavfile.write(name, rate, data.astype(np.float32))
 
-def parse_csv(path):
-    train_bounds = []
-    test_bounds = []
-    val_bounds = []
-    #print("Using csv file %s" % path)
-    with open(path) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
-        line_count = 0
-        for row in csv_reader:
-            if line_count == 0:
-                #print(f'Column names are {", ".join(row)}')
-                ref_names = ["#", "Name", "Start", "End", "Length", "Color"]
-                if row != ref_names:
-                    print("Error: csv file with wrong format")
-                    exit(1)
-            else:
-                if row[5] == "FF0000": # Red means training
-                    train_bounds.append([int(row[2]), int(row[3])])
-                elif row[5] == "00FF00": # Green means test
-                    test_bounds.append([int(row[2]), int(row[3])])
-                elif row[5] == "0000FF": # Blue means val
-                    val_bounds.append([int(row[2]), int(row[3])])
-                elif row[5] == "00FFFF": # Green+Blue means test+val
-                    test_bounds.append([int(row[2]), int(row[3])])
-                    val_bounds.append([int(row[2]), int(row[3])])
-            line_count = line_count + 1
-
-    if len(train_bounds) < 1 or len(test_bounds) < 1 or len(val_bounds) < 1:
-        print("Error: csv file is not containing correct RGB codes")
-        exit(1)
-
-    return[train_bounds, test_bounds, val_bounds]
-
 def shift_info(info, shift: int = 0):
     new_info = {}
     for key, value in info.items():
@@ -380,10 +347,30 @@ def save_csv(path, info):
         writer.writerow(header)
         writer.writerows(data)
 
-# This method deducts the samplerate of the csv file from the noise duration,
+def parse_info(info):
+    train_bounds = []
+    test_bounds = []
+    val_bounds = []
+    for key, value in info.items():
+        if key == "train":
+            train_bounds.append(value)
+        elif key == "test":
+            test_bounds.append(value)
+        elif key == "val":
+            val_bounds.append(value)
+        elif key == "test+val":
+            test_bounds.append(value)
+            val_bounds.append(value)
+
+    if len(train_bounds) < 1 or len(test_bounds) < 1 or len(val_bounds) < 1:
+        print("Error: info does not contain all necessary keys")
+        exit(1)
+
+    return[train_bounds, test_bounds, val_bounds]
+
+# This method deducts the samplerate from the noise duration,
 # which is passed as an argument in milliseconds.
-def get_csv_samplerate(csv_path, noise_duration=500):
-    info = convert_csv_to_info(csv_path)
+def get_info_samplerate(info, noise_duration=500):
     noise_duration_info = info['noise'][1] - info['noise'][0]
     samplerate = int(noise_duration_info / (noise_duration / 1000.0))
     return samplerate
