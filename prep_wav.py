@@ -76,7 +76,7 @@ def WavParse(args):
         compensation_samples = int((compensation / 1000.0) * samplerate)
         first_blips_start = info['blips'][0] - compensation_samples
         t_blips = (info['blips'][1] + compensation_samples) - first_blips_start
-        noise_interval = info['nam_noise']
+        noise_interval = (first_blips_start, first_blips_start + int(compensation_samples / 4))
         print(f"Noise interval: {noise_interval}")
         # Noise interval needs to be included in the region before the first blip
         assert noise_interval[0] >= first_blips_start and noise_interval[1] <= info['blips'][0], "Noise interval is not included in the blips interval!"
