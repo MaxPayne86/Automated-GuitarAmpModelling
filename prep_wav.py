@@ -74,8 +74,12 @@ def WavParse(args):
         print(f"Blip locations: {blip_locations}")
         compensation = 250 # [ms]
         compensation_samples = int((compensation / 1000.0) * samplerate)
-        first_blips_start = info[blips][0] - compensation_samples
-        t_blips = (info[blips][1] + compensation_samples) - first_blips_start
+        first_blips_start = info['blips'][0] - compensation_samples
+        t_blips = (info['blips'][1] + compensation_samples) - first_blips_start
+        noise_interval = info['nam_noise']
+        print(f"Noise interval: {noise_interval}")
+        # Noise interval needs to be included in the region before the first blip
+        assert noise_interval[0] >= first_blips_start and noise_interval[1] <= info['blips'][0], "Noise interval is not included in the blips interval!"
 
         # Populate _DataInfo
         data_info = _DataInfo(
@@ -86,7 +90,7 @@ def WavParse(args):
             t_validate=0,
             train_start=0,
             validation_start=0,
-            noise_interval=(0, 6_000),
+            noise_interval=noise_interval,
             blip_locations=(tuple(blip_locations),),
         )
 
@@ -119,7 +123,7 @@ def WavParse(args):
             in_lvl = peak(x_all)
             y_all = peak(y_all, in_lvl)
 
-        [train_bounds, test_bounds, val_bounds] = parse_info(csv_file)
+        [train_bounds, test_bounds, val_bounds] = parse_info(info)
         splitted_x = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
         splitted_y = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
         for bounds in train_bounds:
@@ -136,20 +140,22 @@ def WavParse(args):
         params_train = []
         params_val = []
         params_test = []
+        try:
+            # Create a list of np arrays of the parameter values
+            for val in entry["params"]:
+                # Create the parameter arrays
+                params_train.append(np.array([val]*len(splitted_x[0]), dtype=np.float32))
+                params_test.append(np.array([val]*len(splitted_x[1]), dtype=np.float32))
+                params_val.append(np.array([val]*len(splitted_x[2]), dtype=np.float32))
 
-        # Create a list of np arrays of the parameter values
-        for val in entry["params"]:
-            # Create the parameter arrays
-            params_train.append(np.array([val]*len(splitted_x[0]), dtype=np.float32))
-            params_test.append(np.array([val]*len(splitted_x[1]), dtype=np.float32))
-            params_val.append(np.array([val]*len(splitted_x[2]), dtype=np.float32))
+            # Convert the lists to numpy arrays
+            params_train = np.array(params_train, dtype=np.float32)
+            params_val = np.array(params_val, dtype=np.float32)
+            params_test = np.array(params_test, dtype=np.float32)
+        except KeyError:
+            continue
 
-        # Convert the lists to numpy arrays
-        params_train = np.array(params_train, dtype=np.float32)
-        params_val = np.array(params_val, dtype=np.float32)
-        params_test = np.array(params_test, dtype=np.float32)
-
-        # Append the audio and paramters to the full data sets
+        # Append the audio and parameters to the full data sets
         all_train_in = np.append(all_train_in, np.append([splitted_x[0]], params_train, axis=0), axis = 1)
         all_train_tg = np.append(all_train_tg, splitted_y[0])
         all_test_in = np.append(all_test_in, np.append([splitted_x[1]], params_test, axis=0), axis = 1)
