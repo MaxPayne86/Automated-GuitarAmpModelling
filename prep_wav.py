@@ -18,7 +18,7 @@ import numpy as np
 import argparse
 import os
 import csv
-from colab_functions import save_wav, peak, align_target
+from colab_functions import save_wav, peak
 from colab_functions import convert_csv_to_info, get_info_samplerate, scale_info, save_csv, parse_info
 from nam_utils import _DataInfo, _calibrate_delay_v_all
 import librosa
