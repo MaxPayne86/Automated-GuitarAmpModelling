@@ -133,17 +133,16 @@ def apply_filter(filter_type='highpass', waveform=None, samplerate: int = 48000,
 
 # This creates a csv file containing regions for input.wav proposed by current public
 # release of AIDA-X. This file is longer than NAM Dataset, containing human-played dry
-# guitar riffs. According to our experiments a longer Dataset usually improves the final model
-# quality, expecially with RNNs.
+# guitar riffs. According to our experiments a longer Dataset usually improves the final model.
 # The content of this file follows Reaper region markers export csv format
 def create_csv_aidax(path):
     header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
     data = [
         ['R1', 'noise', '0', '6000', '6000', 'FFFF00'],
         ['R2', 'blips', '12000', '36000', '24000', 'FFFF00'],
-        ['R3', 'train', '50000', '8160000', '8110000', 'FF0000'],
-        ['R4', 'test+val', '8160000', '8592000', '432000', '00FFFF'],
-        ['R5', 'train_', '8592000', '24211562', '15619562', 'FF0000'],
+        ['R3', 'nam_train', '50000', '8160000', '8110000', 'FF0000'],
+        ['R4', 'nam_test+val', '8160000', '8592000', '432000', '00FFFF'],
+        ['R5', 'train', '8592000', '24211562', '15619562', 'FF0000'],
         ['R6', 'end', '24211562', '24211594', '32', 'FFFF00']
     ]
     with open(path, 'w', encoding='UTF8', newline='') as f:
@@ -151,15 +150,15 @@ def create_csv_aidax(path):
         writer.writerow(header)
         writer.writerows(data)
 
-# This creates a csv file containing regions for NAM v1_1_1.wav.
+# This creates a csv file containing regions for NAM v1_1_1.wav and leaved as reference.
 # The content of this file follows Reaper region markers export csv format
 def create_csv_nam_v1_1_1(path):
     header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
     data = [
         ['R1', 'noise', '0', '6000', '6000', 'FFFF00'],
         ['R2', 'blips', '12000', '36000', '24000', 'FFFF00'],
-        ['R3', 'train', '50000', '8160000', '8110000', 'FF0000'],
-        ['R4', 'test+val', '8160000', '8592000', '432000', '00FFFF'],
+        ['R3', 'nam_train', '50000', '8160000', '8110000', 'FF0000'],
+        ['R4', 'nam_test+val', '8160000', '8592000', '432000', '00FFFF'],
         ['R5', 'end', '8592000', '8592032', '32', 'FFFF00']
     ]
     with open(path, 'w', encoding='UTF8', newline='') as f:
@@ -310,13 +309,13 @@ def parse_info(info):
     test_bounds = []
     val_bounds = []
     for key, value in info.items():
-        if key == "train":
+        if key == "train" or key == "nam_train":
             train_bounds.append(value)
-        elif key == "test":
+        elif key == "test" or key == "nam_test":
             test_bounds.append(value)
-        elif key == "val":
+        elif key == "val" or key == "nam_val":
             val_bounds.append(value)
-        elif key == "test+val":
+        elif key == "test+val" or key == "nam_test+val":
             test_bounds.append(value)
             val_bounds.append(value)
 
