@@ -364,13 +364,3 @@ def bounds_from_csv(path_csv, tag=''):
                     bounds.append([int(row[2]), int(row[3])])
             line_count = line_count + 1
     return bounds
-
-if __name__ == "__main__":
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument('--files', '-f', nargs='+', help='provide input target files in pairs e.g. guitar_in.wav guitar_tg.wav bass_in.wav bass_tg.wav')
-    # parser.add_argument('--load_config', '-l',
-    #               help="File path, to a JSON config file, arguments listed in the config file will replace the defaults", default='RNN-aidadsp-1')
-    # parser.add_argument('--csv_file', '-csv', action=argparse.BooleanOptionalAction, default=False, help='Use csv file for split bounds')
-    # parser.add_argument('--config_location', '-cl', default='Configs', help='Location of the "Configs" directory')
-    prep_audio(["D:\\MOD\\Automated-GuitarAmpModelling\\Data\\alignment\\input.wav", "D:\\MOD\\Automated-GuitarAmpModelling\\Data\\alignment\\Peavy Bandit Crunchy AMP.wav"], "testfile")
-    # train_routine(load_config="RNN-aidadsp-1", segment_length=24000, seed=39, )
