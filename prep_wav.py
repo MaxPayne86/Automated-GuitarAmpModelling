@@ -27,25 +27,25 @@ def WavParse(args):
     print("")
     print("Using config file %s" % args.load_config)
     configs = miscfuncs.json_load(args.load_config, args.config_location)
-    file_name, samplerate, csv_file = None, None, None
+    file_name, samplerate, csv = None, None, None
     try:
         file_name = configs['file_name']
         samplerate = int(configs['samplerate'])
-        csv_file = configs['params']['csv']
+        csv = configs['params']['csv']
         params = configs['params']
     except KeyError as e:
         print(f"Config file is missing the key: {e}")
         exit(1)
     print("Using samplerate = %.2f" % samplerate)
-    print("Using csv file: %s" % csv_file)
-    info = convert_csv_to_info(csv_file)
+    print("Using csv file: %s" % csv)
+    info = convert_csv_to_info(csv)
     info_samplerate = get_info_samplerate(info)
     if info_samplerate != samplerate:
         print("Csv file samplerate = %.2f, desired samplerate = %.2f" % (info_samplerate, samplerate))
         print("Resampling csv file to the desired samplerate")
         info = scale_info(info, scale_factor=float(samplerate)/float(info_samplerate))
-        csv_file = csv_file.replace(".csv", f"-{samplerate}.csv")
-        save_csv(info, csv_file)
+        csv = csv.replace(".csv", f"-{samplerate}.csv")
+        save_csv(csv, info)
 
     counter = 0
     main_rate = 0
