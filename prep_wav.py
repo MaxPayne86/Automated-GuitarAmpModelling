@@ -81,7 +81,7 @@ def WavParse(args):
 
         # Calibrate the delay in the input-output pair based on blips
         delay = _calibrate_delay_v_all(data_info, y_all)
-        print(f"Calibrated delay: {delay} samples")
+        print(f"Calibrated delay: {delay} samples, {delay / in_rate * 1000} ms")
 
         # Delay compensation
         if delay < 0:
