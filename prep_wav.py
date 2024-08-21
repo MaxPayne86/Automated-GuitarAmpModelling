@@ -37,8 +37,8 @@ def WavParse(args):
     # Check if resample is needed
     info_resampled = info
     if info_samplerate != samplerate:
-        print("Csv file samplerate = %.2f, desired samplerate = %.2f" % (info_samplerate, samplerate))
-        print("Resampling csv file to the desired samplerate")
+        #print("Csv file samplerate = %.2f, desired samplerate = %.2f" % (info_samplerate, samplerate))
+        #print("Resampling csv file to the desired samplerate")
         info_resampled = scale_info(info, scale_factor=float(samplerate)/float(info_samplerate))
         csv_resampled = csv.replace(".csv", f"-{samplerate}.csv")
         save_csv(csv_resampled, info_resampled)
@@ -66,13 +66,13 @@ def WavParse(args):
 
         # Auto-align
         blip_locations = info['blips'][0]
-        print(f"Blip locations: {blip_locations}")
+        #print(f"Blip locations: {blip_locations}")
         compensation = 250 # [ms]
         compensation_samples = int((compensation / 1000.0) * in_rate)
         first_blips_start = info['blips'][0][0] - compensation_samples
         t_blips = (info['blips'][0][1] + compensation_samples) - first_blips_start
         noise_interval = (first_blips_start, first_blips_start + int(compensation_samples / 4))
-        print(f"Noise interval: {noise_interval}")
+        #print(f"Noise interval: {noise_interval}")
         # Noise interval needs to be included in the region before the first blip
         assert noise_interval[0] >= first_blips_start and noise_interval[1] <= info['blips'][0][0], "Noise interval is not included in the blips interval!"
 
@@ -102,12 +102,12 @@ def WavParse(args):
             else: # delay >= 0
                 y_all = y_all[delay:].astype(np.float32)
 
-        print(f"Calibrated delay: {delay} samples, {delay / in_rate * 1000} ms")
+        #print(f"Calibrated delay: {delay} samples, {delay / in_rate * 1000} ms")
 
         # Check if the audio files have the same length
         if(x_all.size != y_all.size):
             min_size = min(x_all.size, y_all.size)
-            print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (entry['input'], entry['target'], min_size))
+            #print("Warning! Length for audio files\n\r  %s\n\r  %s\n\rdoes not match, setting both to %d [samples]" % (entry['input'], entry['target'], min_size))
             x_all = np.resize(x_all, min_size)
             y_all = np.resize(y_all, min_size)
 
@@ -121,8 +121,8 @@ def WavParse(args):
             y_all = peak(y_all, in_lvl)
 
         if in_rate != samplerate or tg_rate != samplerate:
-            print("Input samplerate = %.2f, desired samplerate = %.2f" % (in_rate, samplerate))
-            print("Target samplerate = %.2f, desired samplerate = %.2f" % (tg_rate, samplerate))
+            #print("Input samplerate = %.2f, desired samplerate = %.2f" % (in_rate, samplerate))
+            #print("Target samplerate = %.2f, desired samplerate = %.2f" % (tg_rate, samplerate))
             print("Resampling files to the desired samplerate")
             x_all = librosa.resample(x_all, orig_sr=in_rate, target_sr=samplerate)
             y_all = librosa.resample(y_all, orig_sr=tg_rate, target_sr=samplerate)
