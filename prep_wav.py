@@ -46,6 +46,7 @@ def WavParse(args):
         info = scale_info(info, scale_factor=float(samplerate)/float(info_samplerate))
         csv = csv.replace(".csv", f"-{samplerate}.csv")
         save_csv(csv, info)
+        print(f"Saved resampled csv file to {csv}")
 
     counter = 0
     main_rate = 0
