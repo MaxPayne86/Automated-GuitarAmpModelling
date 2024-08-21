@@ -256,8 +256,7 @@ def shift_info(info, shift: int = 0):
     new_info = {}
     for key, values in info.items():
         if isinstance(values, list):
-            for value in values:
-                new_info[key] = [(v[0] + shift, v[1] + shift) for v in value]
+            new_info[key] = [(v[0] + shift, v[1] + shift) for v in values]
         else:
             # Handle other types if necessary
             pass
@@ -267,8 +266,7 @@ def scale_info(info, scale_factor: float = 1.0):
     scaled_info = {}
     for key, values in info.items():
         if isinstance(values, list):
-            for value in values:
-                scaled_info[key] = [(int(v * scale_factor) for v in value)]
+            scaled_info[key] = [(int(v[0] * scale_factor), int(v[1] * scale_factor)) for v in values]
         else:
             # Handle other types if necessary
             pass
