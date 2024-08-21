@@ -30,6 +30,9 @@ def WavParse(args):
         print(f"Config file is missing the key: {e}")
         exit(1)
     print("Using samplerate = %.2f" % samplerate)
+    print("Using csv file: %s" % csv)
+    info = convert_csv_to_info(csv)
+    info_samplerate = get_info_samplerate(info)
 
     counter = 0
     main_rate = 0
@@ -45,10 +48,6 @@ def WavParse(args):
         x_all, in_rate = librosa.load(entry['input'], sr=None, mono=True)
         #print("Target file name: %s" % entry['target'])
         y_all, tg_rate = librosa.load(entry['target'], sr=None, mono=True)
-
-        print("Using csv file: %s" % csv)
-        info = convert_csv_to_info(csv)
-        info_samplerate = get_info_samplerate(info)
 
         # Check audio samplerate vs csv samplerate
         if in_rate != info_samplerate:
