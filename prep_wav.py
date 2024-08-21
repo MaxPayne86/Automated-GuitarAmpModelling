@@ -83,13 +83,14 @@ def WavParse(args):
         delay = _calibrate_delay_v_all(data_info, y_all)
 
         # Delay compensation
-        if delay < 0:
-            y_all = np.concatenate([np.zeros(abs(delay)), y_all]).astype(np.float32)
-        elif delay >= 0:
-            y_all = y_all[delay:].astype(np.float32)
-        else:
+        if delay is None:
             print("Error in calculating delay!")
             raise ValueError
+        else:
+            if delay < 0:
+                y_all = np.concatenate([np.zeros(abs(delay)), y_all]).astype(np.float32)
+            else: # delay >= 0
+                y_all = y_all[delay:].astype(np.float32)
 
         print(f"Calibrated delay: {delay} samples, {delay / in_rate * 1000} ms")
 
