@@ -70,16 +70,16 @@ def WavParse(args):
             y_all = librosa.resample(y_all, orig_sr=tg_rate, target_sr=samplerate)
 
         # Auto-align
-        blip_locations = info['blips']
+        blip_locations = info['blips'][0]
         print(f"Blip locations: {blip_locations}")
         compensation = 250 # [ms]
         compensation_samples = int((compensation / 1000.0) * samplerate)
-        first_blips_start = info['blips'][0] - compensation_samples
-        t_blips = (info['blips'][1] + compensation_samples) - first_blips_start
+        first_blips_start = info['blips'][0][0] - compensation_samples
+        t_blips = (info['blips'][0][1] + compensation_samples) - first_blips_start
         noise_interval = (first_blips_start, first_blips_start + int(compensation_samples / 4))
         print(f"Noise interval: {noise_interval}")
         # Noise interval needs to be included in the region before the first blip
-        assert noise_interval[0] >= first_blips_start and noise_interval[1] <= info['blips'][0], "Noise interval is not included in the blips interval!"
+        assert noise_interval[0] >= first_blips_start and noise_interval[1] <= info['blips'][0][0], "Noise interval is not included in the blips interval!"
 
         # Populate _DataInfo
         data_info = _DataInfo(
@@ -116,7 +116,7 @@ def WavParse(args):
 
         # Noise reduction, using CPU
         if args.denoise:
-            y_all = denoise(waveform=y_all, noise_locations=info['noise'], samplerate=samplerate)
+            y_all = denoise(waveform=y_all, noise_locations=info['noise'][0], samplerate=samplerate)
 
         # Normalization
         if args.norm:
