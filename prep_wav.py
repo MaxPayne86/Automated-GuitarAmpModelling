@@ -34,6 +34,16 @@ def WavParse(args):
     info = convert_csv_to_info(csv)
     info_samplerate = get_info_samplerate(info)
 
+    # Check if resample is needed
+    info_resampled = info
+    if info_samplerate != samplerate:
+        print("Csv file samplerate = %.2f, desired samplerate = %.2f" % (info_samplerate, samplerate))
+        print("Resampling csv file to the desired samplerate")
+        info_resampled = scale_info(info, scale_factor=float(samplerate)/float(info_samplerate))
+        csv_resampled = csv.replace(".csv", f"-{samplerate}.csv")
+        save_csv(csv_resampled, info_resampled)
+        print(f"Saved resampled csv file to {csv_resampled}")
+
     counter = 0
     main_rate = 0
     all_train_in = np.array([[]]*(1 + params['n']), dtype=np.float32) # 1 channel for in audio, n channels per parameters
@@ -110,15 +120,6 @@ def WavParse(args):
             in_lvl = peak(x_all)
             y_all = peak(y_all, in_lvl)
 
-        # Check if resample is needed
-        if info_samplerate != samplerate:
-            print("Csv file samplerate = %.2f, desired samplerate = %.2f" % (info_samplerate, samplerate))
-            print("Resampling csv file to the desired samplerate")
-            info = scale_info(info, scale_factor=float(samplerate)/float(info_samplerate))
-            csv = csv.replace(".csv", f"-{samplerate}.csv")
-            save_csv(csv, info)
-            print(f"Saved resampled csv file to {csv}")
-
         if in_rate != samplerate or tg_rate != samplerate:
             print("Input samplerate = %.2f, desired samplerate = %.2f" % (in_rate, samplerate))
             print("Target samplerate = %.2f, desired samplerate = %.2f" % (tg_rate, samplerate))
@@ -126,7 +127,7 @@ def WavParse(args):
             x_all = librosa.resample(x_all, orig_sr=in_rate, target_sr=samplerate)
             y_all = librosa.resample(y_all, orig_sr=tg_rate, target_sr=samplerate)
 
-        [train_bounds, test_bounds, val_bounds] = parse_info(info)
+        [train_bounds, test_bounds, val_bounds] = parse_info(info_resampled if info_samplerate != samplerate else info)
         splitted_x = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
         splitted_y = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
         for bounds in train_bounds:
