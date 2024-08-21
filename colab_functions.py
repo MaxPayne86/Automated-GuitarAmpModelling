@@ -254,14 +254,24 @@ def save_wav(name, rate, data, flatten=True):
 
 def shift_info(info, shift: int = 0):
     new_info = {}
-    for key, value in info.items():
-        new_info[key] = (value[0] + shift, value[1] + shift)
+    for key, values in info.items():
+        if isinstance(values, list):
+            for value in values:
+                new_info[key] = [(v[0] + shift, v[1] + shift) for v in value]
+        else:
+            # Handle other types if necessary
+            pass
     return new_info
 
 def scale_info(info, scale_factor: float = 1.0):
     scaled_info = {}
-    for key, value in info.items():
-        scaled_info[key] = tuple(int(v * scale_factor) for v in value)
+    for key, values in info.items():
+        if isinstance(values, list):
+            for value in values:
+                scaled_info[key] = [(int(v * scale_factor) for v in value)]
+        else:
+            # Handle other types if necessary
+            pass
     return scaled_info
 
 def convert_csv_to_info(csv_path):
@@ -271,26 +281,28 @@ def convert_csv_to_info(csv_path):
         header = next(reader)
         for row in reader:
             tag, name, start, end, length, color = row
-            info[name] = (int(start), int(end))
+            if name not in info:
+                info[name] = []
+            info[name].append((int(start), int(end)))
     return info
 
 def convert_info_to_csv(info):
     header = ['#', 'Name', 'Start', 'End', 'Length', 'Color']
     data = []
     counter = 1
-    for key, value in info.items():
-        if type(value) == int:
-            pass
+    for key, values in info.items():
+        if isinstance(values, list):
+            for value in values:
+                tag = "R%d" % counter
+                name = key
+                start, end = value
+                length = end - start
+                color = 'FFFF00'  # Pick a color
+                data.append([tag, name, start, end, length, color])
+                counter += 1
         else:
-            tag = "R%d" % counter
-            name = key
-            start = value[0]
-            end = value[1]
-            length = end - start
-            color = 'FFFF00' # Pick a color
-            data.append([tag, name, start, end, length, color])
-            counter += 1
-
+            # Handle other types if necessary
+            pass
     return header, data
 
 def save_csv(path, info):
@@ -305,16 +317,20 @@ def parse_info(info):
     train_bounds = []
     test_bounds = []
     val_bounds = []
-    for key, value in info.items():
-        if key == "train" or key == "nam_train":
-            train_bounds.append(value)
-        elif key == "test" or key == "nam_test":
-            test_bounds.append(value)
-        elif key == "val" or key == "nam_val":
-            val_bounds.append(value)
-        elif key == "test+val" or key == "nam_test+val":
-            test_bounds.append(value)
-            val_bounds.append(value)
+    for key, values in info.items():
+        if isinstance(values, list):
+            if key == "train" or key == "nam_train":
+                train_bounds.append(values)
+            elif key == "test" or key == "nam_test":
+                test_bounds.append(values)
+            elif key == "val" or key == "nam_val":
+                val_bounds.append(values)
+            elif key == "test+val" or key == "nam_test+val":
+                test_bounds.append(values)
+                val_bounds.append(values)
+        else:
+            # Handle other types if necessary
+            pass
 
     if len(train_bounds) < 1 or len(test_bounds) < 1 or len(val_bounds) < 1:
         print("Error: info does not contain all necessary keys")
@@ -325,7 +341,7 @@ def parse_info(info):
 # This method deducts the samplerate from the noise duration,
 # which is passed as an argument in milliseconds.
 def get_info_samplerate(info, noise_duration: float = 500):
-    noise_duration_info = info['noise'][1] - info['noise'][0]
+    noise_duration_info = info['noise'][0][1] - info['noise'][0][0]
     samplerate = int(noise_duration_info / (noise_duration / 1000.0))
     return samplerate
 
