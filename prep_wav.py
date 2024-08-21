@@ -85,7 +85,7 @@ def WavParse(args):
 
         # Delay compensation
         if delay < 0:
-            y_all = np.concatenate(np.zeros(abs(delay)), y_all).astype(np.float32)
+            y_all = np.concatenate([np.zeros(abs(delay)), y_all]).astype(np.float32)
         elif delay >= 0:
             y_all = y_all[delay:].astype(np.float32)
         else:
