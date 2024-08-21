@@ -1,15 +1,8 @@
 # Creating a valid dataset for the trainining script
 # using wav files provided by user.
-# Example of usage:
-# python3 prep_wav.py -f input.wav target.wav -l "RNN-aidadsp-1"
-# the files will be splitted 70% 15% 15%
-# and used to populate train test val.
-# This is done to have different data for training, testing and validation phase
-# according with the paper.
-# If the user provide multiple wav files pairs e.g. guitar_in.wav guitar_tg.wav bass_in.wav bass_tg.wav
-# then 70% of guitar_in.wav is concatenated to 70% of bass_in.wav and so on.
-# If the user provide guitar and bass files of the same length, then the same amount
-# of guitar and bass recorded material will be used for network training.
+# The script will split the audio files into training, testing and validation sets using the csv file provided by the user,
+# which contains the timestamps for the train, test and val intervals in samples.
+# The csv file syntax is following Reaper region markers export csv format.
 
 import CoreAudioML.miscfuncs as miscfuncs
 from CoreAudioML.dataset import audio_splitter
