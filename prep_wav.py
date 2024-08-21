@@ -33,13 +33,6 @@ def WavParse(args):
     print("Using csv file: %s" % csv)
     info = convert_csv_to_info(csv)
     info_samplerate = get_info_samplerate(info)
-    if info_samplerate != samplerate:
-        print("Csv file samplerate = %.2f, desired samplerate = %.2f" % (info_samplerate, samplerate))
-        print("Resampling csv file to the desired samplerate")
-        info = scale_info(info, scale_factor=float(samplerate)/float(info_samplerate))
-        csv = csv.replace(".csv", f"-{samplerate}.csv")
-        save_csv(csv, info)
-        print(f"Saved resampled csv file to {csv}")
 
     counter = 0
     main_rate = 0
@@ -56,18 +49,16 @@ def WavParse(args):
         #print("Target file name: %s" % entry['target'])
         y_all, tg_rate = librosa.load(entry['target'], sr=None, mono=True)
 
-        if in_rate != samplerate or tg_rate != samplerate:
-            print("Input samplerate = %.2f, desired samplerate = %.2f" % (in_rate, samplerate))
-            print("Target samplerate = %.2f, desired samplerate = %.2f" % (tg_rate, samplerate))
-            print("Resampling files to the desired samplerate")
-            x_all = librosa.resample(x_all, orig_sr=in_rate, target_sr=samplerate)
-            y_all = librosa.resample(y_all, orig_sr=tg_rate, target_sr=samplerate)
+        # Check audio samplerate vs csv samplerate
+        if in_rate != info_samplerate:
+            print("Error: audio file samplerate = %.2f, csv samplerate = %.2f" % (in_rate, info_samplerate))
+            exit(1)
 
         # Auto-align
         blip_locations = info['blips'][0]
         print(f"Blip locations: {blip_locations}")
         compensation = 250 # [ms]
-        compensation_samples = int((compensation / 1000.0) * samplerate)
+        compensation_samples = int((compensation / 1000.0) * in_rate)
         first_blips_start = info['blips'][0][0] - compensation_samples
         t_blips = (info['blips'][0][1] + compensation_samples) - first_blips_start
         noise_interval = (first_blips_start, first_blips_start + int(compensation_samples / 4))
@@ -78,7 +69,7 @@ def WavParse(args):
         # Populate _DataInfo
         data_info = _DataInfo(
             major_version=-1,
-            rate=samplerate,
+            rate=int(in_rate),
             t_blips=t_blips,
             first_blips_start=first_blips_start,
             t_validate=0,
@@ -110,12 +101,28 @@ def WavParse(args):
 
         # Noise reduction, using CPU
         if args.denoise:
-            y_all = denoise(waveform=y_all, noise_locations=info['noise'][0], samplerate=samplerate)
+            y_all = denoise(waveform=y_all, noise_locations=info['noise'][0], samplerate=int(in_rate))
 
         # Normalization
         if args.norm:
             in_lvl = peak(x_all)
             y_all = peak(y_all, in_lvl)
+
+        # Check if resample is needed
+        if info_samplerate != samplerate:
+            print("Csv file samplerate = %.2f, desired samplerate = %.2f" % (info_samplerate, samplerate))
+            print("Resampling csv file to the desired samplerate")
+            info = scale_info(info, scale_factor=float(samplerate)/float(info_samplerate))
+            csv = csv.replace(".csv", f"-{samplerate}.csv")
+            save_csv(csv, info)
+            print(f"Saved resampled csv file to {csv}")
+
+        if in_rate != samplerate or tg_rate != samplerate:
+            print("Input samplerate = %.2f, desired samplerate = %.2f" % (in_rate, samplerate))
+            print("Target samplerate = %.2f, desired samplerate = %.2f" % (tg_rate, samplerate))
+            print("Resampling files to the desired samplerate")
+            x_all = librosa.resample(x_all, orig_sr=in_rate, target_sr=samplerate)
+            y_all = librosa.resample(y_all, orig_sr=tg_rate, target_sr=samplerate)
 
         [train_bounds, test_bounds, val_bounds] = parse_info(info)
         splitted_x = [np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32), np.ndarray([0], dtype=np.float32)]
