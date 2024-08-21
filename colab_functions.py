@@ -319,15 +319,16 @@ def parse_info(info):
     val_bounds = []
     for key, values in info.items():
         if isinstance(values, list):
-            if key == "train" or key == "nam_train":
-                train_bounds.append(values)
-            elif key == "test" or key == "nam_test":
-                test_bounds.append(values)
-            elif key == "val" or key == "nam_val":
-                val_bounds.append(values)
-            elif key == "test+val" or key == "nam_test+val":
-                test_bounds.append(values)
-                val_bounds.append(values)
+            for value in values:
+                if key == "train" or key == "nam_train":
+                    train_bounds.append(value)
+                elif key == "test" or key == "nam_test":
+                    test_bounds.append(value)
+                elif key == "val" or key == "nam_val":
+                    val_bounds.append(value)
+                elif key == "test+val" or key == "nam_test+val":
+                    test_bounds.append(value)
+                    val_bounds.append(value)
         else:
             # Handle other types if necessary
             pass
