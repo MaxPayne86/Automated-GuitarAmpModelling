@@ -337,11 +337,9 @@ def parse_info(info):
 
     return[train_bounds, test_bounds, val_bounds]
 
-# This method deducts the samplerate from the noise duration,
-# which is passed as an argument in milliseconds.
-def get_info_samplerate(info, noise_duration: float = 500):
-    noise_duration_info = info['noise'][0][1] - info['noise'][0][0]
-    samplerate = int(noise_duration_info / (noise_duration / 1000.0))
+# This method deducts the samplerate from the corresponding samplerate key in the info dictionary
+def get_info_samplerate(info):
+    samplerate = int(info['samplerate'][0][1])
     return samplerate
 
 def extract_audio_tag(in_file, path_csv, tag=''):
