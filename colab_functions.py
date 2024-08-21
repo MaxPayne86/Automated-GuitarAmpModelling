@@ -339,7 +339,11 @@ def parse_info(info):
 
 # This method deducts the samplerate from the corresponding samplerate key in the info dictionary
 def get_info_samplerate(info):
-    samplerate = int(info['samplerate'][0][1])
+    try:
+        samplerate = int(info['samplerate'][0][1])
+    except KeyError:
+        print("Error: samplerate not found in info")
+        exit(1)
     return samplerate
 
 def extract_audio_tag(in_file, path_csv, tag=''):
