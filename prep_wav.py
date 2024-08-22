@@ -123,7 +123,7 @@ def WavParse(args):
         if in_rate != samplerate or tg_rate != samplerate:
             #print("Input samplerate = %.2f, desired samplerate = %.2f" % (in_rate, samplerate))
             #print("Target samplerate = %.2f, desired samplerate = %.2f" % (tg_rate, samplerate))
-            print("Resampling files to the desired samplerate")
+            #print("Resampling files to the desired samplerate")
             x_all = librosa.resample(x_all, orig_sr=in_rate, target_sr=samplerate)
             y_all = librosa.resample(y_all, orig_sr=tg_rate, target_sr=samplerate)
 
