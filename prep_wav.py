@@ -176,8 +176,6 @@ def WavParse(args):
             all_val_in = np.append(all_val_in, splitted_x[2])
             all_val_tg = np.append(all_val_tg, splitted_y[2])
 
-    print("Saving processed wav files into dataset")
-
     if args.parameterized:
         save_wav("Data/train/" + file_name + "-input.wav", samplerate, all_train_in.T, flatten=False)
         save_wav("Data/test/" + file_name + "-input.wav", samplerate, all_test_in.T, flatten=False)
@@ -191,7 +189,7 @@ def WavParse(args):
     save_wav("Data/test/" + file_name + "-target.wav", samplerate, all_test_tg)
     save_wav("Data/val/" + file_name + "-target.wav", samplerate, all_val_tg)
 
-    print("Done!")
+    print("Saved processed wav files into dataset")
 
 def main(args):
     WavParse(args)
