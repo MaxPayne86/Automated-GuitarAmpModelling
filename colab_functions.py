@@ -318,13 +318,13 @@ def parse_info(info):
     for key, values in info.items():
         if isinstance(values, list):
             for value in values:
-                if key == "train" or key == "nam_train":
+                if key.endswith("_train"):
                     train_bounds.append(value)
-                elif key == "test" or key == "nam_test":
+                elif key.endswith("_test"):
                     test_bounds.append(value)
-                elif key == "val" or key == "nam_val":
+                elif key.endswith("_val"):
                     val_bounds.append(value)
-                elif key == "test+val" or key == "nam_test+val":
+                elif key.endswith("_train+test"):
                     test_bounds.append(value)
                     val_bounds.append(value)
         else:
