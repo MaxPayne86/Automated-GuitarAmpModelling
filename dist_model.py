@@ -189,11 +189,15 @@ if __name__ == "__main__":
 
     print("args.loss_fcns = %s" % str(args.loss_fcns))
     print("args.pre_filt = %s" % args.pre_filt)
-    if args.pre_filt == 'A-Weighting':
-        args.pre_filt = 'aw'
-    elif args.pre_filt == 'high_pass':
+    if args.pre_filt == 'high_pass':
         args.pre_filt = 'hp'
-    elif args.pre_filt == 'None':
+    elif args.pre_filt == 'folded_differentiator':
+        args.pre_filt = 'fd'
+    elif args.pre_filt == 'A-weighting':
+        args.pre_filt = 'aw'
+    elif args.pre_filt == 'A-weighting-lp':
+        args.pre_filt = 'awlp'
+    else:
         args.pre_filt = None
 
     args.samplerate = int(args.samplerate)
