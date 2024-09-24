@@ -239,12 +239,6 @@ def extract_best_esr_model(dirpath):
       model_path = dirpath + "/model_best.json"
   return model_path, esr
 
-def is_ref_input(input_data):
-    ref = np.load("input_ref.npz")['ref']
-    if (input_data[:48000] - ref).sum()==0:
-        return True
-    return False
-
 def save_wav(name, rate, data, flatten=True):
     # print("Writing %s with rate: %d length: %d dtype: %s" % (name, rate, data.size, data.dtype))
     if flatten:
