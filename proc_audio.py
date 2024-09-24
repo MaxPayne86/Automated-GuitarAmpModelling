@@ -64,7 +64,7 @@ def proc_audio(args):
         filt = FIRFilter(filter_type='hp', coef=-a1, fs=data.subsets['input'].fs, ntaps=3) # Note: hp with -coef = lp see Auraloss impl.
         input = _ = output.permute(1, 2, 0)
         input, _ = filt(input, _)
-        output = input.permute(2, 0, 1)
+        output = input.permute(2, 0, 1).div(1 + a1)
 
     if args.target_file:
         test_loss_ESR = lossESR(output, data.subsets['target'].data['data'][0][args.start:args.end])
