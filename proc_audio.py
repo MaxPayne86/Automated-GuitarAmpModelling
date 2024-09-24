@@ -10,6 +10,8 @@ import time
 
 import json
 
+from auraloss.perceptual import FIRFilter
+
 # Example
 # python3 proc_audio.py -l Results/2023-10-05-16:38:04_fnd-twin-rev-aidadsp/model_best.json -i Data/test/aidadsp-auto-input.wav -t Data/test/aidadsp-auto-target.wav -o ./proc.wav -sp
 
@@ -26,6 +28,7 @@ def parse_args():
     parser.add_argument('--spectrogram', '-sp', action=argparse.BooleanOptionalAction, default=False, help='Create spectrogram')
     parser.add_argument('--start', '-s', type=int, default=-1, help='Start point expressed in samples')
     parser.add_argument('--end', '-e', type=int, default=-1, help='End point expressed in samples')
+    parser.add_argument('--filter', '-f', default='lp', help='Filter type to apply to the output')
     return parser.parse_args()
 
 
@@ -55,6 +58,11 @@ def proc_audio(args):
 
     with torch.no_grad():
         output = network(data.subsets['input'].data['data'][0][args.start:args.end])
+
+    if args.filter == 'lp':
+        a1 = (8.5e+03 * 2 * 3.1416) / data.subsets['input'].fs
+        filt = FIRFilter(filter_type='hp', coef=-a1, fs=data.subsets['input'].fs, ntaps=3) # Note: hp with -coef = lp see Auraloss impl.
+        output = filt(output.permute(1, 2, 0)).permute(2, 0, 1)
 
     if args.target_file:
         test_loss_ESR = lossESR(output, data.subsets['target'].data['data'][0][args.start:args.end])
