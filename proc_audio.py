@@ -28,7 +28,7 @@ def parse_args():
     parser.add_argument('--spectrogram', '-sp', action=argparse.BooleanOptionalAction, default=False, help='Create spectrogram')
     parser.add_argument('--start', '-s', type=int, default=-1, help='Start point expressed in samples')
     parser.add_argument('--end', '-e', type=int, default=-1, help='End point expressed in samples')
-    parser.add_argument('--filter', '-f', default='lp', help='Filter type to apply to the output')
+    parser.add_argument('--filter', '-f', default='', help='Filter type to apply to the output')
     return parser.parse_args()
 
 
