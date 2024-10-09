@@ -185,15 +185,28 @@ if __name__ == "__main__":
     # Check if an existing saved model exists, and load it, otherwise creates a new model
     network = init_model(save_path, args)
 
+    # Check the PyTorch version
+    torch_version = torch.__version__
+
+    # Set default data type
+    if torch_version >= "2.1":
+        torch.set_default_dtype(torch.float32)
+    else:
+        torch.set_default_tensor_type(torch.FloatTensor)
+
     # Check if a cuda device is available
     if not torch.cuda.is_available() or args.cuda == 0:
         # print('cuda device not available/not selected')
         cuda = 0
+        if torch_version >= "2.1":
+            torch.set_default_device('cpu')
     else:
-        torch.set_default_tensor_type('torch.cuda.FloatTensor')
-        torch.cuda.set_device(0)
+        if torch_version >= "2.1":
+            torch.set_default_device('gpu')
+        else:
+            torch.cuda.set_device(0)
         # print('cuda device available')
-        network = network.cuda()
+        network = network.cuda() # Move the network obj to the GPU
         cuda = 1
 
     # Set up training optimiser + scheduler + loss fcns and training info tracker
