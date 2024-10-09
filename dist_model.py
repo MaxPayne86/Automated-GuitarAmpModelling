@@ -130,15 +130,15 @@ def init_model(save_path, args):
             network = GatedConvNet(channels=args.hidden_size, blocks=args.num_blocks,
                                             layers=args.num_layers, dilation_growth=args.dilation_growth,
                                             kernel_size=args.kernel_size)
+        elif args.model == 'AsymmetricAdvancedClipSimpleRNN':
+            from CoreAudioML.custom_networks import AsymmetricAdvancedClipSimpleRNN
+            network = AsymmetricAdvancedClipSimpleRNN(input_size=args.input_size, unit_type=args.unit_type, hidden_size=args.hidden_size,
+                                            output_size=args.output_size, clip_position=args.clip_position)
         elif args.model == 'ConvSimpleRNN':
-            from CoreAudioML.networks import ConvSimpleRNN
+            from CoreAudioML.custom_networks import ConvSimpleRNN
             network = ConvSimpleRNN(input_size=args.input_size, dilation_num=args.num_layers, dilation_growth=args.dilation_growth,
                                             channels=6, kernel_size=3, unit_type=args.unit_type, hidden_size=args.hidden_size,
                                             output_size=args.output_size, skip=args.skip_con)
-        elif args.model == 'AsymmetricAdvancedClipSimpleRNN':
-            from CoreAudioML.networks import AsymmetricAdvancedClipSimpleRNN
-            network = AsymmetricAdvancedClipSimpleRNN(input_size=args.input_size, unit_type=args.unit_type, hidden_size=args.hidden_size,
-                                            output_size=args.output_size, clip_position=args.clip_position)
         network.save_state = False
         network.save_model('model', save_path)
     return network
