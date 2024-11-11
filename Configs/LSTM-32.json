@@ -1,0 +1,10 @@
+{
+  "model": "SimpleRNN",
+  "hidden_size": 32,
+  "unit_type": "LSTM",
+  "loss_fcns": { "ESR": 0.75, "DC": 0.25 },
+  "pre_filt": "A-Weighting",
+  "device": "",
+  "samplerate": 48000.0,
+  "author": ""
+}
